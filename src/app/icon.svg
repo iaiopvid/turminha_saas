@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>Turminha</title>
+  <rect width="64" height="64" rx="18" fill="#5321CE"/>
+  <g fill="#FFFFFF">
+    <ellipse cx="32" cy="17.5" rx="7.5" ry="10"/>
+    <ellipse cx="45.8" cy="27.5" rx="7.5" ry="10" transform="rotate(72 45.8 27.5)"/>
+    <ellipse cx="40.5" cy="43.5" rx="7.5" ry="10" transform="rotate(144 40.5 43.5)"/>
+    <ellipse cx="23.5" cy="43.5" rx="7.5" ry="10" transform="rotate(216 23.5 43.5)"/>
+    <ellipse cx="18.2" cy="27.5" rx="7.5" ry="10" transform="rotate(288 18.2 27.5)"/>
+  </g>
+  <circle cx="32" cy="32" r="5.5" fill="#FFD84D"/>
+  <path d="M49 10.5v5M46.5 13h5" stroke="#FF9BC2" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

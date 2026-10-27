@@ -1,0 +1,50 @@
+{
+  "name": "turminha-saas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src prisma scripts next.config.ts prisma.config.ts eslint.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:local:create": "tsx scripts/create-local-database.ts",
+    "db:migrate": "prisma migrate dev --name init_shared_tenant_core",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:inspect": "tsx scripts/inspect-database.ts",
+    "verify:m1": "tsx scripts/verify-m1.ts",
+    "smoke:m1": "tsx scripts/smoke-m1.ts",
+    "smoke:m2": "tsx scripts/smoke-m2.ts",
+    "smoke:m2:lifecycle": "tsx scripts/smoke-m2-lifecycle.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "@fontsource-variable/fredoka": "5.3.0",
+    "@fontsource/poppins": "5.3.0",
+    "bcryptjs": "^3.0.2",
+    "jose": "^6.1.0",
+    "lucide-react": "^0.468.0",
+    "lru-cache": "11.5.3",
+    "mariadb": "^3.4.5",
+    "next": "16.4.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "16.4.3",
+    "prisma": "7.10.1",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

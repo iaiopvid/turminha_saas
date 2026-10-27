@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mundo Mágico do Maternal I - Colégio Pilares | Titias Lane & Helen</title>
+  
+  <!-- Fonts: Fredoka & Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti for magical moments -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            skyBg: '#E0F7FA',
+            sunYellow: '#FFF176',
+            pastelPink: '#FF80AB',
+            pastelGreen: '#A5D6A7',
+            pastelPurple: '#B39DDB',
+            pastelOrange: '#FFAB91',
+            maternalRed: '#FF5252',
+            maternalBlue: '#29B6F6',
+            maternalYellow: '#FFCA28',
+            maternalGreen: '#66BB6A',
+          },
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          animation: {
+            'float-cloud-1': 'floatCloud 28s linear infinite',
+            'float-cloud-2': 'floatCloud 40s linear infinite',
+            'float-cloud-3': 'floatCloud 34s linear infinite',
+            'balloon-rise': 'balloonRise 18s ease-in infinite',
+            'twinkle': 'twinkle 2s infinite ease-in-out',
+            'spin-slow': 'spin 12s linear infinite',
+            'bounce-gentle': 'bounceGentle 2s infinite',
+            'flutter': 'flutterButterfly 3s ease-in-out infinite',
+          },
+          keyframes: {
+            floatCloud: {
+              '0%': { transform: 'translateX(-150px)' },
+              '100%': { transform: 'translateX(100vw)' }
+            },
+            balloonRise: {
+              '0%': { transform: 'translateY(100vh) rotate(0deg)', opacity: '0.8' },
+              '50%': { transform: 'translateY(50vh) rotate(5deg)', opacity: '1' },
+              '100%': { transform: 'translateY(-120px) rotate(-5deg)', opacity: '0' }
+            },
+            twinkle: {
+              '0%, 100%': { opacity: '0.3', transform: 'scale(0.8)' },
+              '50%': { opacity: '1', transform: 'scale(1.2)' }
+            },
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' }
+            },
+            flutterButterfly: {
+              '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+              '25%': { transform: 'translateY(-8px) rotate(-10deg)' },
+              '75%': { transform: 'translateY(5px) rotate(10deg)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 12px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e0f7fa;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ff80ab;
+      border-radius: 10px;
+      border: 3px solid #e0f7fa;
+    }
+    
+    /* Wavy Divider SVG */
+    .wavy-top {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0 C150,90 350,-40 500,50 C650,140 900,-20 1200,40 L1200,120 L0,120 Z' fill='%23ffffff'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* Floating SVG Pins / Windmill */
+    .windmill-blade {
+      transform-origin: center;
+      animation: spin 6s linear infinite;
+    }
+
+    /* Glassmorphism Card Style */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 4px solid #FFF;
+    }
+
+    /* Cute cloud shape helper */
+    .cloud-card {
+      border-radius: 40px 40px 30px 30px;
+    }
+
+    /* Active Nav Tab Style */
+    .nav-tab-active {
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body class="bg-skyBg font-poppins text-slate-700 min-h-screen relative overflow-x-hidden flex flex-col selection:bg-pastelPink selection:text-white">
+
+  <!-- ==================== ANIMATED BACKGROUND ELEMENTS ==================== -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <!-- Sun in top right -->
+    <div class="absolute top-4 right-4 sm:top-8 sm:right-12 text-yellow-400 text-6xl sm:text-8xl animate-spin-slow opacity-90 drop-shadow-lg">
+      <i class="fa-solid fa-sun"></i>
+    </div>
+
+    <!-- Twinkling Stars -->
+    <i class="fa-solid fa-star absolute top-12 left-1/4 text-yellow-300 text-xl animate-twinkle"></i>
+    <i class="fa-solid fa-star absolute top-24 right-1/3 text-yellow-300 text-2xl animate-twinkle" style="animation-delay: 0.7s;"></i>
+    <i class="fa-solid fa-star absolute top-48 left-10 text-yellow-200 text-lg animate-twinkle" style="animation-delay: 1.3s;"></i>
+    <i class="fa-solid fa-sparkles absolute top-1/3 right-10 text-pink-300 text-2xl animate-twinkle" style="animation-delay: 0.4s;"></i>
+
+    <!-- Floating Clouds -->
+    <div class="absolute top-10 animate-float-cloud-1 opacity-80 text-white drop-shadow-md text-6xl sm:text-8xl">
+      <i class="fa-solid fa-cloud"></i>
+    </div>
+    <div class="absolute top-36 animate-float-cloud-2 opacity-90 text-white drop-shadow-md text-7xl sm:text-9xl" style="animation-delay: -10s;">
+      <i class="fa-solid fa-cloud"></i>
+    </div>
+    <div class="absolute top-64 animate-float-cloud-3 opacity-70 text-white drop-shadow-md text-5xl sm:text-7xl" style="animation-delay: -18s;">
+      <i class="fa-solid fa-cloud"></i>
+    </div>
+
+    <!-- Rising Balloons -->
+    <div class="absolute left-[10%] animate-balloon-rise text-pink-400 text-4xl sm:text-5xl" style="animation-delay: 0s;">
+      <i class="fa-solid fa-balloon"></i>
+    </div>
+    <div class="absolute left-[35%] animate-balloon-rise text-amber-400 text-5xl sm:text-6xl" style="animation-delay: 6s;">
+      <i class="fa-solid fa-balloon"></i>
+    </div>
+    <div class="absolute left-[65%] animate-balloon-rise text-sky-400 text-4xl sm:text-5xl" style="animation-delay: 12s;">
+      <i class="fa-solid fa-balloon"></i>
+    </div>
+    <div class="absolute left-[85%] animate-balloon-rise text-purple-400 text-5xl sm:text-6xl" style="animation-delay: 3s;">
+      <i class="fa-solid fa-balloon"></i>
+    </div>
+
+    <!-- Fluttering Butterflies -->
+    <div class="absolute top-1/2 left-8 text-pink-400 text-3xl animate-flutter">
+      <i class="fa-solid fa-butterfly"></i>
+    </div>
+    <div class="absolute top-2/3 right-12 text-purple-400 text-3xl animate-flutter" style="animation-delay: 1.5s;">
+      <i class="fa-solid fa-butterfly"></i>
+    </div>
+  </div>
+
+  <!-- ==================== DEMO / QUICK ACCESS TOOLBAR ==================== -->
+  <div class="bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 text-white px-4 py-2 text-xs sm:text-sm font-fredoka flex flex-wrap justify-between items-center gap-2 shadow-md relative z-50">
+    <div class="flex items-center gap-2">
+      <span class="bg-white/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[11px]"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Modo Demonstração</span>
+      <span class="hidden md:inline text-white/90">Teste o site navegando pelas abas ou simule logins rápidos:</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="quickLogin('admin')" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs transition font-semibold flex items-center gap-1 border border-white/30">
+        <i class="fa-solid fa-user-shield"></i> Entrar como Titia (Admin)
+      </button>
+      <button onclick="quickLogin('joao')" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs transition font-semibold flex items-center gap-1 border border-white/30">
+        <i class="fa-solid fa-baby"></i> Entrar como Pai (João)
+      </button>
+      <button onclick="quickLogin('maria')" class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs transition font-semibold flex items-center gap-1 border border-white/30 hidden sm:flex">
+        <i class="fa-solid fa-baby"></i> Entrar como Mãe (Maria)
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== HEADER & NAVIGATION ==================== -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md shadow-lg border-b-4 border-yellow-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- Brand Logo -->
+      <div onclick="switchTab('home')" class="cursor-pointer flex items-center gap-3 group">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-pink-400 via-yellow-300 to-sky-400 rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl shadow-md group-hover:scale-105 transition-transform duration-300 border-2 border-white">
+          <i class="fa-solid fa-shapes"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-fredoka text-2xl sm:text-3xl font-bold text-pink-500 tracking-wide drop-shadow-sm">Maternal I</span>
+            <span class="bg-amber-100 text-amber-700 text-xs font-fredoka font-bold px-2 py-0.5 rounded-full border border-amber-300">Colégio Pilares</span>
+          </div>
+          <p class="text-xs font-fredoka text-sky-600 font-medium">Turminha das Titias Lane & Helen <i class="fa-solid fa-heart text-pink-400"></i></p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full md:w-auto font-fredoka">
+        <button id="nav-home" onclick="switchTab('home')" class="nav-btn bg-yellow-400 hover:bg-yellow-300 text-slate-800 px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-house"></i> Início
+        </button>
+
+        <button id="nav-turma" onclick="switchTab('turma')" class="nav-btn bg-pastelGreen hover:bg-green-300 text-green-900 px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-child-reaching"></i> Nossa Turma
+        </button>
+
+        <button id="nav-galeria" onclick="switchTab('galeria')" class="nav-btn bg-pastelPurple hover:bg-purple-300 text-purple-900 px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-camera-retro"></i> Galeria
+        </button>
+
+        <button id="nav-titias" onclick="switchTab('titias')" class="nav-btn bg-pastelPink hover:bg-pink-300 text-pink-900 px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-heart text-red-500"></i> Titias
+        </button>
+
+        <!-- User/Login Dynamic Button -->
+        <div id="user-nav-container">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 relative z-10">
+
+    <!-- ------------------ 1. HOME TAB ------------------ -->
+    <section id="tab-home" class="tab-content space-y-8">
+      
+      <!-- Hero Welcome Banner -->
+      <div class="glass-card rounded-3xl p-6 sm:p-10 text-center relative overflow-hidden shadow-xl border-4 border-yellow-200">
+        <div class="absolute -top-10 -left-10 w-32 h-32 bg-yellow-200 rounded-full opacity-50 blur-xl"></div>
+        <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-pink-200 rounded-full opacity-50 blur-xl"></div>
+
+        <div class="inline-block bg-pink-100 text-pink-600 px-4 py-1.5 rounded-full font-fredoka text-sm sm:text-base font-semibold mb-3 border border-pink-200 shadow-sm animate-bounce-gentle">
+          🎈 Ano Letivo Cheio de Amor e Descobertas! 🎨
+        </div>
+
+        <h1 class="font-fredoka text-3xl sm:text-5xl font-bold text-slate-800 leading-tight mb-4">
+          Bem-vindos ao <span class="text-pink-500">Mundo Mágico</span> do <span class="text-sky-500">Maternal I</span>!
+        </h1>
+        
+        <p class="max-w-2xl mx-auto text-slate-600 text-base sm:text-lg mb-6 leading-relaxed font-medium">
+          Aqui no <span class="font-semibold text-amber-600">Colégio Pilares</span>, cada dia é uma nova aventura repleta de tintas, gargalhadas, histórias encantadas e muito carinho com as Titias <strong class="text-pink-600">Lane</strong> e <strong class="text-purple-600">Helen</strong>.
+        </p>
+
+        <!-- Quick Action Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 pt-2">
+          <button onclick="switchTab('turma')" class="bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-slate-800 font-fredoka font-bold text-lg px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 flex items-center gap-2">
+            <i class="fa-solid fa-users text-amber-800"></i> Conhecer os Amiguinhos
+          </button>
+          <button onclick="switchTab('galeria')" class="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white font-fredoka font-bold text-lg px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 flex items-center gap-2">
+            <i class="fa-solid fa-images text-yellow-200"></i> Ver Fotos da Turminha
+          </button>
+        </div>
+      </div>
+
+      <!-- Notice Board & Daily Highlights Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Mural do Dia (Daily Notice) -->
+        <div class="md:col-span-2 glass-card rounded-3xl p-6 shadow-md border-l-8 border-pink-400 relative">
+          <div class="flex items-center justify-between mb-4 pb-2 border-b-2 border-dashed border-slate-200">
+            <h2 class="font-fredoka text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <span class="w-10 h-10 bg-pink-100 text-pink-500 rounded-2xl flex items-center justify-center text-xl">
+                <i class="fa-solid fa-bullhorn"></i>
+              </span>
+              Mural do Dia das Titias
+            </h2>
+            <span class="text-xs font-fredoka bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-semibold border border-pink-200">Atualizado Hoje</span>
+          </div>
+
+          <div id="home-notice-box" class="bg-amber-50/80 rounded-2xl p-5 border border-amber-200 relative mb-4">
+            <i class="fa-solid fa-quote-left text-amber-200 text-4xl absolute top-2 right-4"></i>
+            <h3 id="notice-title" class="font-fredoka font-bold text-amber-900 text-lg mb-1">🎉 Amanhã: A Hora da Massinha Mágica!</h3>
+            <p id="notice-text" class="text-slate-700 font-medium text-sm leading-relaxed">
+              "Queridas famílias! Amanhã nossa aula será super sensorial! Vamos criar massinha caseira colorida. Pedimos que enviem as crianças com camisetinha confortável que possa sujar de alegria! Beijinhos das Titias Lane e Helen! 🎨✨"
+            </p>
+          </div>
+
+          <!-- Feature badges -->
+          <div class="grid grid-cols-3 gap-3 text-center text-xs font-fredoka font-bold">
+            <div class="bg-sky-50 text-sky-700 p-3 rounded-2xl border border-sky-100 flex flex-col items-center gap-1">
+              <i class="fa-solid fa-palette text-xl text-sky-500"></i>
+              <span>Artes & Cores</span>
+            </div>
+            <div class="bg-emerald-50 text-emerald-700 p-3 rounded-2xl border border-emerald-100 flex flex-col items-center gap-1">
+              <i class="fa-solid fa-music text-xl text-emerald-500"></i>
+              <span>Cantigas & Rodas</span>
+            </div>
+            <div class="bg-purple-50 text-purple-700 p-3 rounded-2xl border border-purple-100 flex flex-col items-center gap-1">
+              <i class="fa-solid fa-shapes text-xl text-purple-500"></i>
+              <span>Jogos Lúdicos</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cantinho das Novidades / Quick Stats -->
+        <div class="glass-card rounded-3xl p-6 shadow-md border-t-8 border-yellow-400 flex flex-col justify-between">
+          <div>
+            <h3 class="font-fredoka text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-star text-yellow-400"></i> Nosso Cantinho
+            </h3>
+            <p class="text-xs text-slate-600 mb-4 font-medium leading-relaxed">
+              O Maternal I conta com espaço seguro, higienizado, parquinho adaptado e salas tematizadas.
+            </p>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                <span class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+                  <i class="fa-solid fa-face-smile text-amber-400"></i> Pequenos Cadastrados
+                </span>
+                <span id="stat-students-count" class="font-fredoka font-bold text-lg text-amber-500">0</span>
+              </div>
+              <div class="flex items-center justify-between p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+                <span class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+                  <i class="fa-solid fa-camera text-purple-400"></i> Fotos na Galeria
+                </span>
+                <span id="stat-photos-count" class="font-fredoka font-bold text-lg text-purple-500">0</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="triggerConfetti()" class="w-full mt-4 bg-pink-100 hover:bg-pink-200 text-pink-700 font-fredoka font-bold text-xs py-2.5 rounded-2xl transition border border-pink-300 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-wand-magic"></i> Soltar Magia! 🎉
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ------------------ 2. NOSSA TURMA TAB ------------------ -->
+    <section id="tab-turma" class="tab-content space-y-6 hidden">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <h2 class="font-fredoka text-3xl sm:text-4xl font-bold text-slate-800">
+          🧸 Nossos Pequenos Notáveis
+        </h2>
+        <p class="text-slate-600 font-medium text-sm sm:text-base">
+          Clique no card de qualquer amiguinho para ver uma mensagem fofa e especial!
+        </p>
+      </div>
+
+      <!-- Students Cloud Grid -->
+      <div id="students-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pt-4">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ------------------ 3. GALERIA DA TURMA TAB ------------------ -->
+    <section id="tab-galeria" class="tab-content space-y-6 hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-fredoka text-3xl font-bold text-slate-800 flex items-center gap-3">
+            📸 Galeria Coletiva da Turminha
+          </h2>
+          <p class="text-slate-600 text-sm font-medium">Momentos inesquecíveis vividos no Maternal I</p>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap gap-2 font-fredoka">
+          <button onclick="filterGallery('todos', this)" class="gallery-filter-btn active bg-pink-500 text-white px-4 py-2 rounded-2xl text-sm font-bold shadow-sm hover:scale-105 transition">
+            ✨ Todas
+          </button>
+          <button onclick="filterGallery('Atividades', this)" class="gallery-filter-btn bg-white text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-2xl text-sm font-bold shadow-sm hover:scale-105 transition">
+            🎨 Atividades
+          </button>
+          <button onclick="filterGallery('Brincadeiras', this)" class="gallery-filter-btn bg-white text-slate-700 hover:bg-amber-100 px-4 py-2 rounded-2xl text-sm font-bold shadow-sm hover:scale-105 transition">
+            🎈 Brincadeiras
+          </button>
+          <button onclick="filterGallery('Festas', this)" class="gallery-filter-btn bg-white text-slate-700 hover:bg-purple-100 px-4 py-2 rounded-2xl text-sm font-bold shadow-sm hover:scale-105 transition">
+            🎉 Festas
+          </button>
+        </div>
+      </div>
+
+      <!-- Public Gallery Grid -->
+      <div id="public-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ------------------ 4. CANTINHO DAS TITIAS TAB ------------------ -->
+    <section id="tab-titias" class="tab-content space-y-8 hidden">
+      
+      <!-- Titias Intro Card -->
+      <div class="glass-card rounded-3xl p-6 sm:p-10 shadow-xl border-4 border-pink-200">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+          
+          <!-- Teachers Photo -->
+          <div class="relative group">
+            <div class="absolute -inset-2 bg-gradient-to-r from-pink-400 via-yellow-300 to-purple-400 rounded-3xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80" alt="Titias Lane e Helen" class="relative rounded-3xl w-full h-72 object-cover shadow-md border-4 border-white">
+            <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-xl text-xs font-fredoka font-bold text-pink-600 shadow-sm">
+              <i class="fa-solid fa-heart"></i> Titias Lane & Helen
+            </div>
+          </div>
+
+          <!-- Teachers Letter -->
+          <div class="lg:col-span-2 space-y-4">
+            <div class="inline-block bg-pink-100 text-pink-700 text-xs font-fredoka font-bold px-3 py-1 rounded-full border border-pink-200">
+              💌 Carta para as Famílias
+            </div>
+            <h2 class="font-fredoka text-3xl font-bold text-slate-800">
+              Educando com Amor, Respeito e Muita Poesia!
+            </h2>
+            <p class="text-slate-600 text-sm leading-relaxed font-medium">
+              Queridas famílias! Seja bem-vindas ao nosso cantinho virtual do Maternal I do Colégio Pilares. Acreditamos que a educação na primeira infância precisa ser leve, lúdica e repleta de afeto. Aqui, cada pequena conquista é celebrada como uma grande vitória!
+            </p>
+            <p class="text-slate-600 text-sm leading-relaxed font-medium">
+              Contem conosco diariamente para acompanhar o crescimento saudável e feliz dos seus pequenos tesouros.
+            </p>
+
+            <div class="pt-2 flex flex-wrap gap-4 text-xs font-fredoka font-bold text-slate-700">
+              <span class="flex items-center gap-1.5 bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-graduation-cap text-amber-600"></i> Pedagoga Especialista
+              </span>
+              <span class="flex items-center gap-1.5 bg-sky-100 text-sky-800 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-hands-holding-child text-sky-600"></i> Estimulação Precoce
+              </span>
+              <span class="flex items-center gap-1.5 bg-pink-100 text-pink-800 px-3 py-1.5 rounded-xl">
+                <i class="fa-solid fa-face-smile-beam text-pink-600"></i> Afeto & Segurança
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tips for Parents Section -->
+      <div class="space-y-4">
+        <h3 class="font-fredoka text-2xl font-bold text-slate-800 flex items-center gap-2">
+          💡 Dicas das Titias para os Pais
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div class="glass-card p-5 rounded-2xl shadow-sm border-t-4 border-sky-400">
+            <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center text-xl mb-3">
+              <i class="fa-solid fa-moon"></i>
+            </div>
+            <h4 class="font-fredoka font-bold text-slate-800 text-base mb-1">Rotina do Sono</h4>
+            <p class="text-xs text-slate-600 font-medium leading-relaxed">
+              Manter horários regulares para dormir ajuda os pequenos a chegarem dispostos e alegres para as brincadeiras do dia.
+            </p>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl shadow-sm border-t-4 border-amber-400">
+            <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl mb-3">
+              <i class="fa-solid fa-shirt"></i>
+            </div>
+            <h4 class="font-fredoka font-bold text-slate-800 text-base mb-1">Roupas Confortáveis</h4>
+            <p class="text-xs text-slate-600 font-medium leading-relaxed">
+              Optem por roupinhas leves e fáceis de vestir que permitam correr, engatinhar e brincar no parque com liberdade.
+            </p>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl shadow-sm border-t-4 border-pink-400">
+            <div class="w-10 h-10 bg-pink-100 text-pink-600 rounded-xl flex items-center justify-center text-xl mb-3">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <h4 class="font-fredoka font-bold text-slate-800 text-base mb-1">Diálogo na Chegada</h4>
+            <p class="text-xs text-slate-600 font-medium leading-relaxed">
+              Perguntem como foi a historinha do dia e incentivem o pequeno a contar suas descobertas com entusiasmo.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ------------------ 5. LOGIN MODAL / TAB ------------------ -->
+    <section id="tab-login" class="tab-content space-y-6 hidden">
+      <div class="max-w-md mx-auto glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-sky-300 relative">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-sky-100 text-sky-500 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h2 class="font-fredoka text-2xl font-bold text-slate-800">Área Restrita</h2>
+          <p class="text-xs text-slate-500 font-medium">Acesso para Famílias do Maternal I e Titias</p>
+        </div>
+
+        <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Usuário de Acesso</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="login-username" required placeholder="Ex: joao ou admin" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border-2 border-slate-200 focus:border-sky-400 focus:outline-none text-sm font-medium">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Senha Secreta</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                <i class="fa-solid fa-key"></i>
+              </span>
+              <input type="password" id="login-password" required placeholder="******" class="w-full pl-10 pr-4 py-2.5 rounded-2xl border-2 border-slate-200 focus:border-sky-400 focus:outline-none text-sm font-medium">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white font-fredoka font-bold text-base py-3 rounded-2xl shadow-md transition transform hover:scale-[1.02]">
+            Entrar no Cantinho <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i>
+          </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-200 text-center text-xs font-medium text-slate-500 space-y-2">
+          <p><i class="fa-solid fa-circle-info text-sky-400"></i> Dúvidas no acesso? Fale diretamente com as Titias.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------ 6. PARENTS AREA (DASHBOARD) ------------------ -->
+    <section id="tab-parent-dashboard" class="tab-content space-y-6 hidden">
+      <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border-4 border-pink-200">
+        
+        <!-- Parent Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b-2 border-dashed border-slate-200">
+          <div class="flex items-center gap-4">
+            <img id="parent-student-avatar" src="" alt="Avatar" class="w-16 h-16 rounded-2xl object-cover border-4 border-pink-300 shadow-sm">
+            <div>
+              <span class="bg-pink-100 text-pink-700 text-xs font-fredoka font-bold px-2.5 py-0.5 rounded-full border border-pink-200">Área da Família</span>
+              <h2 id="parent-student-name" class="font-fredoka text-2xl sm:text-3xl font-bold text-slate-800">
+                Cantinho de...
+              </h2>
+              <p class="text-xs text-slate-500 font-medium">Sinta-se à vontade para salvar as memórias mais fofas!</p>
+            </div>
+          </div>
+
+          <button onclick="logout()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-fredoka font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-2 border border-slate-300">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair do Acesso
+          </button>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="mt-6 bg-pink-50/60 p-5 rounded-2xl border-2 border-pink-200">
+          <h3 class="font-fredoka font-bold text-pink-800 text-lg mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Enviar Nova Memória ou Trabalho
+          </h3>
+          <p class="text-xs text-slate-600 mb-4 font-medium">Suba fotos de atividades em casa, passeios ou desenhos especiais do seu pequeno.</p>
+
+          <form onsubmit="handleParentUpload(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Título / Momentos</label>
+              <input type="text" id="parent-upload-title" required placeholder="Ex: Primeiro desenho de casa" class="w-full px-3 py-2 rounded-xl border border-pink-300 text-xs focus:outline-none focus:ring-2 focus:ring-pink-400">
+            </div>
+
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Selecione a Imagem</label>
+              <input type="file" id="parent-upload-file" accept="image/*" required class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-fredoka file:font-bold file:bg-pink-500 file:text-white hover:file:bg-pink-600">
+            </div>
+
+            <div class="sm:col-span-1">
+              <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-fredoka font-bold text-xs py-2.5 rounded-xl shadow transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-upload"></i> Salvar no Álbum
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Student Private Album Grid -->
+        <div class="mt-8">
+          <h3 class="font-fredoka font-bold text-slate-800 text-xl mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-images text-pink-400"></i> Álbum Privado da Família
+          </h3>
+
+          <div id="parent-private-album" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ------------------ 7. ADMIN / TEACHERS AREA ------------------ -->
+    <section id="tab-admin-dashboard" class="tab-content space-y-6 hidden">
+      <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl border-4 border-amber-300">
+        
+        <!-- Admin Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b-2 border-dashed border-slate-200">
+          <div>
+            <span class="bg-amber-100 text-amber-800 text-xs font-fredoka font-bold px-2.5 py-0.5 rounded-full border border-amber-200">Acesso Exclusivo</span>
+            <h2 class="font-fredoka text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-2">
+               Painel Geral das Titias Lane & Helen
+            </h2>
+            <p class="text-xs text-slate-500 font-medium">Gestão da turma, senhas, galeria e avisos gerais</p>
+          </div>
+
+          <button onclick="logout()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-fredoka font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-2 border border-slate-300">
+            <i class="fa-solid fa-right-from-bracket"></i> Sair do Painel
+          </button>
+        </div>
+
+        <!-- Admin Tab Navigation -->
+        <div class="flex flex-wrap gap-2 pt-2 border-b border-slate-200 font-fredoka text-sm">
+          <button onclick="switchAdminSubtab('students')" id="admin-subtab-btn-students" class="admin-subtab-btn px-4 py-2 rounded-t-2xl font-bold bg-amber-400 text-slate-900">
+            <i class="fa-solid fa-children"></i> Gerenciar Alunos & Senhas
+          </button>
+          <button onclick="switchAdminSubtab('gallery')" id="admin-subtab-btn-gallery" class="admin-subtab-btn px-4 py-2 rounded-t-2xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <i class="fa-solid fa-photo-film"></i> Publicar na Galeria
+          </button>
+          <button onclick="switchAdminSubtab('notice')" id="admin-subtab-btn-notice" class="admin-subtab-btn px-4 py-2 rounded-t-2xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <i class="fa-solid fa-bullhorn"></i> Editar Mural do Dia
+          </button>
+        </div>
+
+        <!-- Admin Subtab 1: Manage Students -->
+        <div id="admin-subtab-students" class="admin-subtab-content space-y-6 pt-4">
+          
+          <!-- Add Student Form -->
+          <div class="bg-amber-50/70 p-5 rounded-2xl border border-amber-200">
+            <h3 class="font-fredoka font-bold text-amber-900 text-base mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-user-plus"></i> Cadastrar Novo Aluno / Aluna
+            </h3>
+
+            <form onsubmit="handleAdminAddStudent(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Nome Completo</label>
+                <input type="text" id="admin-student-name" required placeholder="Ex: Pedro Henrique" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
+              </div>
+
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Usuário do Pai/Mãe</label>
+                <input type="text" id="admin-student-user" required placeholder="Ex: pedrinho" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
+              </div>
+
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Senha de Acesso</label>
+                <input type="text" id="admin-student-pass" required placeholder="Ex: 123" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
+              </div>
+
+              <div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-fredoka font-bold text-xs py-2.5 rounded-xl shadow transition flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-plus"></i> Cadastrar
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Students List Table -->
+          <div>
+            <h3 class="font-fredoka font-bold text-slate-800 text-lg mb-3">Lista de Alunos Registrados</h3>
+            
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-100 font-fredoka text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3">Aluno</th>
+                    <th class="p-3">Usuário</th>
+                    <th class="p-3">Senha</th>
+                    <th class="p-3 text-center">Fotos Privadas</th>
+                    <th class="p-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-students-table-body" class="divide-y divide-slate-200 bg-white">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Admin Subtab 2: Publish Public Gallery Photos -->
+        <div id="admin-subtab-gallery" class="admin-subtab-content space-y-6 pt-4 hidden">
+          
+          <div class="bg-purple-50/70 p-5 rounded-2xl border border-purple-200">
+            <h3 class="font-fredoka font-bold text-purple-900 text-base mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Publicar Foto Coletiva na Galeria
+            </h3>
+
+            <form onsubmit="handleAdminAddGalleryPhoto(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Título da Foto</label>
+                <input type="text" id="admin-gallery-title" required placeholder="Ex: Dia do Brinquedo" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none">
+              </div>
+
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Categoria</label>
+                <select id="admin-gallery-category" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none bg-white">
+                  <option value="Atividades">🎨 Atividades</option>
+                  <option value="Brincadeiras">🎈 Brincadeiras</option>
+                  <option value="Festas">🎉 Festas</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Arquivo de Imagem</label>
+                <input type="file" id="admin-gallery-file" accept="image/*" required class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-purple-500 file:text-white">
+              </div>
+
+              <div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-fredoka font-bold text-xs py-2.5 rounded-xl shadow transition">
+                  Publicar Foto
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Admin Subtab 3: Edit Daily Notice -->
+        <div id="admin-subtab-notice" class="admin-subtab-content space-y-6 pt-4 hidden">
+          <div class="bg-sky-50/70 p-5 rounded-2xl border border-sky-200 space-y-4">
+            <h3 class="font-fredoka font-bold text-sky-900 text-base flex items-center gap-2">
+              <i class="fa-solid fa-pen-to-square"></i> Atualizar Mensagem do Mural do Dia
+            </h3>
+
+            <div>
+              <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Título do Aviso</label>
+              <input type="text" id="admin-notice-title-input" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none">
+            </div>
+
+            <div>
+              <label class="block text-xs font-fredoka font-bold text-slate-700 mb-1">Conteúdo do Recado</label>
+              <textarea id="admin-notice-text-input" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none"></textarea>
+            </div>
+
+            <button onclick="saveNoticeUpdate()" class="bg-sky-500 hover:bg-sky-600 text-white font-fredoka font-bold text-xs px-5 py-2.5 rounded-xl shadow transition">
+              Salvar Recado no Mural
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="mt-auto bg-white/90 backdrop-blur-md border-t-4 border-pink-300 relative z-10 pt-6 pb-6">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-3">
+      <div class="flex justify-center items-center gap-2 text-pink-500 font-fredoka font-bold text-xl">
+        <span>Maternal I</span>
+        <i class="fa-solid fa-heart text-red-400"></i>
+        <span>Colégio Pilares</span>
+      </div>
+      <p class="text-xs text-slate-500 font-medium max-w-md mx-auto">
+        Criado com amor para os alunos, mamães, papais e titias Lane e Helen. Desenvolvido para espalhar sorrisos!
+      </p>
+      <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+        &copy; Colégio Pilares - Todos os direitos reservados.
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL: STUDENT PUBLIC PROFILE ==================== -->
+  <div id="student-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="glass-card rounded-3xl p-6 max-w-sm w-full text-center relative border-4 border-yellow-300 shadow-2xl transform scale-95 transition-transform duration-300" id="student-modal-card">
+      
+      <button onclick="closeStudentModal()" class="absolute top-3 right-3 w-8 h-8 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-full flex items-center justify-center text-sm font-bold transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="relative w-28 h-28 mx-auto mb-4">
+        <img id="modal-student-img" src="" alt="" class="w-full h-full rounded-full object-cover border-4 border-pink-400 shadow-md">
+        <span class="absolute bottom-0 right-0 w-8 h-8 bg-yellow-300 text-yellow-800 rounded-full flex items-center justify-center text-sm shadow">
+          <i class="fa-solid fa-star"></i>
+        </span>
+      </div>
+
+      <h3 id="modal-student-name" class="font-fredoka text-2xl font-bold text-slate-800 mb-1"></h3>
+      <span class="inline-block bg-sky-100 text-sky-700 text-xs font-fredoka font-bold px-3 py-1 rounded-full border border-sky-200 mb-3">
+        Maternal I - Pilares
+      </span>
+
+      <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-xs text-slate-700 font-medium leading-relaxed italic mb-4">
+        "<span id="modal-student-quote"></span>"
+      </div>
+
+      <button onclick="closeStudentModal()" class="w-full bg-gradient-to-r from-pink-400 to-purple-400 text-white font-fredoka font-bold text-xs py-2.5 rounded-xl shadow transition">
+        Fechar com um Sorriso! 😊
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: LIGHTBOX FOR GALLERY ==================== -->
+  <div id="lightbox-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeLightbox()">
+    <div class="relative max-w-3xl w-full text-center" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white text-3xl hover:text-pink-400 transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <img id="lightbox-img" src="" alt="" class="max-h-[75vh] mx-auto rounded-3xl border-4 border-white shadow-2xl object-contain">
+      <p id="lightbox-caption" class="font-fredoka text-lg text-white font-bold mt-3 drop-shadow"></p>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    /* ================= INITIAL STATE & DATA ================= */
+    const DEFAULT_STUDENTS = [
+      {
+        id: 1,
+        name: "Joãozinho Silva",
+        user: "joao",
+        pass: "123",
+        avatar: "https://images.unsplash.com/photo-1543332164-6e82f355badc?auto=format&fit=crop&w=300&q=80",
+        quote: "Adora brincar de massinha e pintar o papel pardo com as mãos cheias de tinta azul!",
+        photos: [
+          { title: "Pintura com os Dedos", url: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=600&q=80" },
+          { title: "Dia no Parquinho", url: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?auto=format&fit=crop&w=600&q=80" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Maria Clara",
+        user: "maria",
+        pass: "123",
+        avatar: "https://images.unsplash.com/photo-1595454810013-492520775905?auto=format&fit=crop&w=300&q=80",
+        quote: "A ama cantar a cantiga do Alecrim Dourado e cuidar dos bichinhos de pelúcia!",
+        photos: [
+          { title: "Desenho para as Titias", url: "https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=600&q=80" }
+        ]
+      },
+      {
+        id: 3,
+        name: "Lucas Gabriel",
+        user: "lucas",
+        pass: "123",
+        avatar: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?auto=format&fit=crop&w=300&q=80",
+        quote: "O construtor oficial de blocos de montar da sala! Faz torres mais altas que ele!",
+        photos: []
+      },
+      {
+        id: 4,
+        name: "Sofia Rosa",
+        user: "sofia",
+        pass: "123",
+        avatar: "https://images.unsplash.com/photo-1502086223501-7ea6ecd79368?auto=format&fit=crop&w=300&q=80",
+        quote: "Sempre pronta para a hora da historinha com olhos bem abertos e um sorriso fofo!",
+        photos: []
+      }
+    ];
+
+    const DEFAULT_PUBLIC_GALLERY = [
+      { id: 101, title: "Pintura Coletiva de Primavera", category: "Atividades", url: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=600&q=80" },
+      { id: 102, title: "Brincadeira no Parquinho", category: "Brincadeiras", url: "https://images.unsplash.com/photo-1472162072942-cd5147eb3902?auto=format&fit=crop&w=600&q=80" },
+      { id: 103, title: "Festa do Pijama e Historinhas", category: "Festas", url: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=600&q=80" },
+      { id: 104, title: "Modelando com Massinha Caseira", category: "Atividades", url: "https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=600&q=80" }
+    ];
+
+    const DEFAULT_NOTICE = {
+      title: "🎉 Amanhã: A Hora da Massinha Mágica!",
+      text: "Queridas famílias! Amanhã nossa aula será super sensorial! Vamos criar massinha caseira colorida. Pedimos que enviem as crianças com camisetinha confortável que possa sujar de alegria! Beijinhos das Titias Lane e Helen! 🎨✨"
+    };
+
+    /* LocalStorage Keys & State */
+    let students = JSON.parse(localStorage.getItem('maternal_students')) || DEFAULT_STUDENTS;
+    let publicGallery = JSON.parse(localStorage.getItem('maternal_gallery')) || DEFAULT_PUBLIC_GALLERY;
+    let dailyNotice = JSON.parse(localStorage.getItem('maternal_notice')) || DEFAULT_NOTICE;
+    let currentUser = null; // { role: 'admin' } OR { role: 'parent', studentId: X }
+
+    // Save helpers
+    function saveData() {
+      localStorage.setItem('maternal_students', JSON.stringify(students));
+      localStorage.setItem('maternal_gallery', JSON.stringify(publicGallery));
+      localStorage.setItem('maternal_notice', JSON.stringify(dailyNotice));
+      updateStats();
+    }
+
+    /* ================= INITIALIZATION ================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderPublicNotice();
+      renderStudentsGrid();
+      renderPublicGallery('todos');
+      updateUserNav();
+      updateStats();
+    });
+
+    /* ================= NAVIGATION LOGIC ================= */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+
+      // Update Nav Buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('nav-tab-active', 'ring-4', 'ring-yellow-300');
+      });
+
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.classList.add('nav-tab-active', 'ring-4', 'ring-yellow-300');
+      }
+
+      // Re-render specifics if needed
+      if (tabId === 'turma') renderStudentsGrid();
+      if (tabId === 'galeria') renderPublicGallery('todos');
+      if (tabId === 'parent-dashboard' && currentUser?.role === 'parent') renderParentDashboard();
+      if (tabId === 'admin-dashboard' && currentUser?.role === 'admin') renderAdminDashboard();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ================= STATS & NOTICE ================= */
+    function updateStats() {
+      const studentCount = document.getElementById('stat-students-count');
+      const photoCount = document.getElementById('stat-photos-count');
+      if (studentCount) studentCount.innerText = students.length;
+      if (photoCount) photoCount.innerText = publicGallery.length;
+    }
+
+    function renderPublicNotice() {
+      const title = document.getElementById('notice-title');
+      const text = document.getElementById('notice-text');
+      if (title && text) {
+        title.innerText = dailyNotice.title;
+        text.innerText = `"${dailyNotice.text}"`;
+      }
+    }
+
+    /* ================= PUBLIC STUDENTS & MODAL ================= */
+    function renderStudentsGrid() {
+      const grid = document.getElementById('students-grid');
+      if (!grid) return;
+
+      grid.innerHTML = students.map(s => `
+        <div onclick="openStudentModal(${s.id})" class="glass-card cloud-card p-5 text-center cursor-pointer transform hover:-translate-y-2 hover:shadow-xl transition-all duration-300 group border-4 border-yellow-200 relative overflow-hidden">
+          <div class="absolute -top-6 -right-6 w-16 h-16 bg-yellow-200 rounded-full opacity-40"></div>
+          <div class="relative w-24 h-24 mx-auto mb-3">
+            <img src="${s.avatar}" alt="${s.name}" class="w-full h-full rounded-full object-cover border-4 border-pink-400 shadow-md group-hover:scale-105 transition">
+            <span class="absolute bottom-0 right-0 bg-yellow-300 text-slate-800 text-xs w-7 h-7 rounded-full flex items-center justify-center font-bold shadow">
+              <i class="fa-solid fa-star"></i>
+            </span>
+          </div>
+          <h3 class="font-fredoka text-xl font-bold text-slate-800 mb-1 group-hover:text-pink-500 transition">${s.name}</h3>
+          <span class="text-[11px] font-fredoka bg-sky-100 text-sky-700 px-3 py-1 rounded-full border border-sky-200 inline-block font-semibold">
+            Ver Carinho ✨
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function openStudentModal(id) {
+      const student = students.find(s => s.id === id);
+      if (!student) return;
+
+      document.getElementById('modal-student-img').src = student.avatar;
+      document.getElementById('modal-student-name').innerText = student.name;
+      document.getElementById('modal-student-quote').innerText = student.quote || "Um anjinho cheio de energia e alegria no Maternal I!";
+
+      const modal = document.getElementById('student-modal');
+      const card = document.getElementById('student-modal-card');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }
+
+    function closeStudentModal() {
+      const modal = document.getElementById('student-modal');
+      const card = document.getElementById('student-modal-card');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      card.classList.remove('scale-100');
+      card.classList.add('scale-95');
+    }
+
+    /* ================= PUBLIC GALLERY & LIGHTBOX ================= */
+    function renderPublicGallery(category) {
+      const grid = document.getElementById('public-gallery-grid');
+      if (!grid) return;
+
+      const items = category === 'todos' ? publicGallery : publicGallery.filter(g => g.category === category);
+
+      if (items.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 font-fredoka">Nenhuma foto encontrada nesta categoria ainda! 🎈</div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(item => `
+        <div onclick="openLightbox('${item.url}', '${item.title}')" class="glass-card rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition transform hover:-translate-y-1 cursor-pointer group border-4 border-white">
+          <div class="relative h-48 overflow-hidden">
+            <img src="${item.url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-slate-800 font-fredoka font-bold text-xs px-3 py-1 rounded-full shadow-sm">
+              ${item.category}
+            </span>
+          </div>
+          <div class="p-4 bg-white">
+            <h4 class="font-fredoka font-bold text-slate-800 text-base">${item.title}</h4>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterGallery(category, btnElement) {
+      document.querySelectorAll('.gallery-filter-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-pink-500', 'text-white');
+        btn.classList.add('bg-white', 'text-slate-700');
+      });
+      if (btnElement) {
+        btnElement.classList.add('active', 'bg-pink-500', 'text-white');
+        btnElement.classList.remove('bg-white', 'text-slate-700');
+      }
+      renderPublicGallery(category);
+    }
+
+    function openLightbox(url, title) {
+      document.getElementById('lightbox-img').src = url;
+      document.getElementById('lightbox-caption').innerText = title;
+      const modal = document.getElementById('lightbox-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeLightbox() {
+      const modal = document.getElementById('lightbox-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    /* ================= LOGIN & USER NAV ================= */
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+
+      if (u === 'admin' && p === '123') {
+        currentUser = { role: 'admin' };
+        updateUserNav();
+        switchTab('admin-dashboard');
+        triggerConfetti();
+        return;
+      }
+
+      const student = students.find(s => s.user.toLowerCase() === u.toLowerCase() && s.pass === p);
+      if (student) {
+        currentUser = { role: 'parent', studentId: student.id };
+        updateUserNav();
+        switchTab('parent-dashboard');
+        triggerConfetti();
+        return;
+      }
+
+      alert('Usuário ou senha inválidos! Tente "admin" / "123" ou "joao" / "123".');
+    }
+
+    function quickLogin(type) {
+      if (type === 'admin') {
+        currentUser = { role: 'admin' };
+        updateUserNav();
+        switchTab('admin-dashboard');
+      } else {
+        const student = students.find(s => s.user === type) || students[0];
+        currentUser = { role: 'parent', studentId: student.id };
+        updateUserNav();
+        switchTab('parent-dashboard');
+      }
+      triggerConfetti();
+    }
+
+    function logout() {
+      currentUser = null;
+      updateUserNav();
+      switchTab('home');
+    }
+
+    function updateUserNav() {
+      const container = document.getElementById('user-nav-container');
+      if (!container) return;
+
+      if (!currentUser) {
+        container.innerHTML = `
+          <button onclick="switchTab('login')" class="bg-maternalBlue hover:bg-sky-400 text-white px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-lock"></i> Entrar
+          </button>
+        `;
+      } else if (currentUser.role === 'admin') {
+        container.innerHTML = `
+          <button onclick="switchTab('admin-dashboard')" class="bg-amber-400 hover:bg-amber-300 text-slate-900 px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm border-2 border-amber-200">
+            <i class="fa-solid fa-user-shield"></i> Painel Titias
+          </button>
+        `;
+      } else {
+        const student = students.find(s => s.id === currentUser.studentId);
+        container.innerHTML = `
+          <button onclick="switchTab('parent-dashboard')" class="bg-pink-400 hover:bg-pink-300 text-white px-4 py-2 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 flex items-center gap-2 shadow-sm border-2 border-pink-200">
+            <i class="fa-solid fa-heart"></i> Espaço ${student ? student.name.split(' ')[0] : 'Pai'}
+          </button>
+        `;
+      }
+    }
+
+    /* ================= PARENTS DASHBOARD ================= */
+    function renderParentDashboard() {
+      if (!currentUser || currentUser.role !== 'parent') return;
+      const student = students.find(s => s.id === currentUser.studentId);
+      if (!student) return;
+
+      document.getElementById('parent-student-name').innerText = `Cantinho do(a) ${student.name}`;
+      document.getElementById('parent-student-avatar').src = student.avatar;
+
+      const albumGrid = document.getElementById('parent-private-album');
+      if (student.photos.length === 0) {
+        albumGrid.innerHTML = `
+          <div class="col-span-full text-center py-8 bg-white/60 rounded-2xl border-2 border-dashed border-pink-200 text-slate-500 font-fredoka">
+            <i class="fa-solid fa-camera-retro text-3xl text-pink-300 mb-2"></i>
+            <p>Nenhuma foto enviada ainda. Faça o primeiro upload acima!</p>
+          </div>
+        `;
+        return;
+      }
+
+      albumGrid.innerHTML = student.photos.map((ph, idx) => `
+        <div class="glass-card rounded-2xl overflow-hidden shadow border-2 border-pink-200">
+          <img src="${ph.url}" alt="${ph.title}" class="w-full h-40 object-cover">
+          <div class="p-3 bg-white flex justify-between items-center">
+            <span class="font-fredoka font-bold text-xs text-slate-700">${ph.title}</span>
+            <button onclick="deleteParentPhoto(${idx})" class="text-red-500 hover:text-red-700 text-xs p-1 font-bold" title="Excluir">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleParentUpload(e) {
+      e.preventDefault();
+      const title = document.getElementById('parent-upload-title').value.trim();
+      const fileInput = document.getElementById('parent-upload-file');
+
+      if (!fileInput.files || !fileInput.files[0]) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const student = students.find(s => s.id === currentUser.studentId);
+        if (student) {
+          student.photos.push({ title: title, url: evt.target.result });
+          saveData();
+          renderParentDashboard();
+          document.getElementById('parent-upload-title').value = '';
+          fileInput.value = '';
+          triggerConfetti();
+        }
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function deleteParentPhoto(index) {
+      const student = students.find(s => s.id === currentUser.studentId);
+      if (student && confirm('Deseja excluir esta memória do álbum privado?')) {
+        student.photos.splice(index, 1);
+        saveData();
+        renderParentDashboard();
+      }
+    }
+
+    /* ================= ADMIN DASHBOARD ================= */
+    function renderAdminDashboard() {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      renderAdminStudentsTable();
+
+      // Set current notice in inputs
+      document.getElementById('admin-notice-title-input').value = dailyNotice.title;
+      document.getElementById('admin-notice-text-input').value = dailyNotice.text;
+    }
+
+    function switchAdminSubtab(subtab) {
+      document.querySelectorAll('.admin-subtab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`admin-subtab-${subtab}`).classList.remove('hidden');
+
+      document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-400', 'text-slate-900');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+
+      const activeBtn = document.getElementById(`admin-subtab-btn-${subtab}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-amber-400', 'text-slate-900');
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+      }
+    }
+
+    function renderAdminStudentsTable() {
+      const tbody = document.getElementById('admin-students-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = students.map(s => `
+        <tr class="hover:bg-amber-50/50 transition">
+          <td class="p-3 font-semibold text-slate-800 flex items-center gap-2">
+            <img src="${s.avatar}" class="w-8 h-8 rounded-full object-cover">
+            ${s.name}
+          </td>
+          <td class="p-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-amber-700 font-bold">${s.user}</code></td>
+          <td class="p-3"><code class="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-bold">${s.pass}</code></td>
+          <td class="p-3 text-center"><span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-bold">${s.photos.length} fotos</span></td>
+          <td class="p-3 text-right">
+            <button onclick="removeStudent(${s.id})" class="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 px-2 py-1 rounded-lg border border-red-200">
+              <i class="fa-solid fa-trash"></i> Remover
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function handleAdminAddStudent(e) {
+      e.preventDefault();
+      const name = document.getElementById('admin-student-name').value.trim();
+      const user = document.getElementById('admin-student-user').value.trim();
+      const pass = document.getElementById('admin-student-pass').value.trim();
+
+      const newStudent = {
+        id: Date.now(),
+        name,
+        user,
+        pass,
+        avatar: "https://images.unsplash.com/photo-1543332164-6e82f355badc?auto=format&fit=crop&w=300&q=80",
+        quote: "Pequeno notável do Maternal I pronto para aprender!",
+        photos: []
+      };
+
+      students.push(newStudent);
+      saveData();
+      renderAdminStudentsTable();
+      renderStudentsGrid();
+
+      document.getElementById('admin-student-name').value = '';
+      document.getElementById('admin-student-user').value = '';
+      document.getElementById('admin-student-pass').value = '';
+      triggerConfetti();
+    }
+
+    function removeStudent(id) {
+      if (confirm('Tem certeza que deseja remover este aluno do sistema?')) {
+        students = students.filter(s => s.id !== id);
+        saveData();
+        renderAdminStudentsTable();
+        renderStudentsGrid();
+      }
+    }
+
+    function handleAdminAddGalleryPhoto(e) {
+      e.preventDefault();
+      const title = document.getElementById('admin-gallery-title').value.trim();
+      const category = document.getElementById('admin-gallery-category').value;
+      const fileInput = document.getElementById('admin-gallery-file');
+
+      if (!fileInput.files || !fileInput.files[0]) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        publicGallery.unshift({
+          id: Date.now(),
+          title,
+          category,
+          url: evt.target.result
+        });
+        saveData();
+        renderPublicGallery('todos');
+        document.getElementById('admin-gallery-title').value = '';
+        fileInput.value = '';
+        triggerConfetti();
+        alert('Foto publicada com sucesso na Galeria Coletiva!');
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function saveNoticeUpdate() {
+      const title = document.getElementById('admin-notice-title-input').value.trim();
+      const text = document.getElementById('admin-notice-text-input').value.trim();
+
+      if (title && text) {
+        dailyNotice = { title, text };
+        saveData();
+        renderPublicNotice();
+        triggerConfetti();
+        alert('Mural do Dia atualizado com sucesso!');
+      }
+    }
+
+    /* ================= MAGICAL EFFECTS ================= */
+    function triggerConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#FF80AB', '#FFF176', '#A5D6A7', '#B39DDB', '#29B6F6']
+        });
+      }
+    }
+  </script>
+</body>
+</html>

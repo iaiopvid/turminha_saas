@@ -1,0 +1,440 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MembershipRole {
+  SCHOOL_ADMIN
+  COORDINATOR
+  TEACHER
+  ASSISTANT
+  SECRETARY
+  BILLING_MANAGER
+  GUARDIAN
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  REVOKED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  WAITLISTED
+  TRANSFERRED
+  FINISHED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum NoticeVisibility {
+  DRAFT
+  PUBLISHED
+}
+
+enum MediaCategory {
+  ACTIVITY
+  PLAY
+  EVENT
+}
+
+enum CalendarEntryKind {
+  TERM
+  HOLIDAY
+  RECESS
+  SCHOOL_EVENT
+}
+
+model Tenant {
+  id                     String                  @id @default(cuid()) @db.VarChar(30)
+  slug                   String                  @unique @db.VarChar(80)
+  status                 TenantStatus            @default(ACTIVE)
+  createdAt              DateTime                @default(now())
+  school                 School?
+  memberships            Membership[]
+  units                  SchoolUnit[]
+  classrooms             Classroom[]
+  students               Student[]
+  importedStudentSources ImportedStudentSource[]
+  notices                Announcement[]
+  media                  MediaAsset[]
+  schoolYears            SchoolYear[]
+  invitations            Invitation[]
+  importBatches          ImportBatch[]
+  calendarEntries        CalendarEntry[]
+  onboarding             OnboardingProgress[]
+  transfers              EnrollmentTransfer[]
+
+  @@map("tenants")
+}
+
+model School {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  tenantId       String   @unique @db.VarChar(30)
+  name           String   @db.VarChar(140)
+  displayClass   String   @default("Nossa turma") @db.VarChar(100)
+  displayTeam    String   @default("Equipe pedagógica") @db.VarChar(180)
+  timezone       String   @default("America/Sao_Paulo") @db.VarChar(80)
+  publicStudents Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@map("schools")
+}
+
+model SchoolUnit {
+  id         String      @id @default(cuid()) @db.VarChar(30)
+  tenantId   String      @db.VarChar(30)
+  name       String      @db.VarChar(120)
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classrooms Classroom[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, name])
+  @@index([tenantId, active, name])
+  @@map("school_units")
+}
+
+model User {
+  id           String       @id @default(cuid()) @db.VarChar(30)
+  email        String       @unique @db.VarChar(254)
+  displayName  String       @db.VarChar(100)
+  passwordHash String       @db.VarChar(100)
+  memberships  Membership[]
+  sessions     Session[]
+  createdAt    DateTime     @default(now())
+
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(cuid()) @db.VarChar(30)
+  tokenHash String    @unique @db.Char(64)
+  userId    String    @db.VarChar(30)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+model Membership {
+  id                  String               @id @default(cuid()) @db.VarChar(30)
+  tenantId            String               @db.VarChar(30)
+  userId              String               @db.VarChar(30)
+  role                MembershipRole
+  status              MembershipStatus     @default(ACTIVE)
+  createdAt           DateTime             @default(now())
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  classroomLinks      ClassroomStaff[]
+  guardianLinks       StudentGuardian[]
+  attendanceRecords   Attendance[]
+  sentInvitations     Invitation[]         @relation("InvitationCreator")
+  importBatches       ImportBatch[]        @relation("ImportBatchCreator")
+  calendarEntries     CalendarEntry[]      @relation("CalendarEntryCreator")
+  onboardingUpdates   OnboardingProgress[] @relation("OnboardingUpdater")
+  enrollmentTransfers EnrollmentTransfer[] @relation("TransferRecorder")
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, id])
+  @@index([userId, status])
+  @@map("memberships")
+}
+
+model Classroom {
+  id          String           @id @default(cuid()) @db.VarChar(30)
+  tenantId    String           @db.VarChar(30)
+  unitId      String?          @db.VarChar(30)
+  name        String           @db.VarChar(100)
+  schoolYear  Int
+  capacity    Int              @default(24)
+  status      EnrollmentStatus @default(ACTIVE)
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  unit        SchoolUnit?      @relation(fields: [tenantId, unitId], references: [tenantId, id], onDelete: Restrict)
+  enrollments Enrollment[]
+  staff       ClassroomStaff[]
+  notices     Announcement[]
+  media       MediaAsset[]
+  invitations Invitation[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, schoolYear, name])
+  @@index([tenantId, schoolYear, status])
+  @@index([tenantId, unitId, schoolYear])
+  @@map("classrooms")
+}
+
+model ClassroomStaff {
+  id           String     @id @default(cuid()) @db.VarChar(30)
+  tenantId     String     @db.VarChar(30)
+  classroomId  String     @db.VarChar(30)
+  membershipId String     @db.VarChar(30)
+  createdAt    DateTime   @default(now())
+  classroom    Classroom  @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  membership   Membership @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, classroomId, membershipId])
+  @@index([tenantId, membershipId])
+  @@map("classroom_staff")
+}
+
+model Student {
+  id                 String                  @id @default(cuid()) @db.VarChar(30)
+  tenantId           String                  @db.VarChar(30)
+  displayName        String                  @db.VarChar(100)
+  publicProfile      Boolean                 @default(false)
+  publicQuote        String?                 @db.VarChar(240)
+  createdAt          DateTime                @default(now())
+  tenant             Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  enrollments        Enrollment[]
+  guardians          StudentGuardian[]
+  invitations        Invitation[]
+  transfers          EnrollmentTransfer[]
+  externalReferences ImportedStudentSource[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, displayName])
+  @@map("students")
+}
+
+model ImportedStudentSource {
+  id        String   @id @default(cuid()) @db.VarChar(30)
+  tenantId  String   @db.VarChar(30)
+  studentId String   @db.VarChar(30)
+  sourceKey String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  student   Student  @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, sourceKey])
+  @@index([tenantId, studentId])
+  @@map("imported_student_sources")
+}
+
+model Enrollment {
+  id            String               @id @default(cuid()) @db.VarChar(30)
+  tenantId      String               @db.VarChar(30)
+  studentId     String               @db.VarChar(30)
+  classroomId   String               @db.VarChar(30)
+  status        EnrollmentStatus     @default(ACTIVE)
+  validFrom     DateTime             @default(now()) @db.Date
+  validUntil    DateTime?            @db.Date
+  student       Student              @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  classroom     Classroom            @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  attendance    Attendance[]
+  transfersFrom EnrollmentTransfer[] @relation("TransferFrom")
+  transfersTo   EnrollmentTransfer[] @relation("TransferTo")
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, studentId, classroomId])
+  @@index([tenantId, classroomId, status])
+  @@map("enrollments")
+}
+
+model StudentGuardian {
+  id           String     @id @default(cuid()) @db.VarChar(30)
+  tenantId     String     @db.VarChar(30)
+  studentId    String     @db.VarChar(30)
+  membershipId String     @db.VarChar(30)
+  approved     Boolean    @default(false)
+  revokedAt    DateTime?
+  student      Student    @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  membership   Membership @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, studentId, membershipId])
+  @@index([tenantId, membershipId, approved, revokedAt])
+  @@map("student_guardians")
+}
+
+model Attendance {
+  id           String           @id @default(cuid()) @db.VarChar(30)
+  tenantId     String           @db.VarChar(30)
+  enrollmentId String           @db.VarChar(30)
+  classDate    DateTime         @db.Date
+  status       AttendanceStatus
+  recordedBy   String           @db.VarChar(30)
+  createdAt    DateTime         @default(now())
+  enrollment   Enrollment       @relation(fields: [tenantId, enrollmentId], references: [tenantId, id], onDelete: Restrict)
+  recorder     Membership       @relation(fields: [tenantId, recordedBy], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, enrollmentId, classDate])
+  @@index([tenantId, classDate, status])
+  @@index([tenantId, recordedBy])
+  @@map("attendance")
+}
+
+model Announcement {
+  id          String           @id @default(cuid()) @db.VarChar(30)
+  tenantId    String           @db.VarChar(30)
+  classroomId String?          @db.VarChar(30)
+  title       String           @db.VarChar(160)
+  body        String           @db.VarChar(2000)
+  visibility  NoticeVisibility @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classroom   Classroom?       @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, visibility, publishedAt])
+  @@map("announcements")
+}
+
+model MediaAsset {
+  id          String        @id @default(cuid()) @db.VarChar(30)
+  tenantId    String        @db.VarChar(30)
+  classroomId String?       @db.VarChar(30)
+  title       String        @db.VarChar(160)
+  category    MediaCategory
+  storageKey  String?       @db.VarChar(300)
+  status      String        @default("PENDING") @db.VarChar(24)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classroom   Classroom?    @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, classroomId, publishedAt, id])
+  @@map("media_assets")
+}
+
+model SchoolYear {
+  id        String          @id @default(cuid()) @db.VarChar(30)
+  tenantId  String          @db.VarChar(30)
+  year      Int
+  startsOn  DateTime        @db.Date
+  endsOn    DateTime        @db.Date
+  closedAt  DateTime?
+  createdAt DateTime        @default(now())
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  calendar  CalendarEntry[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, year])
+  @@index([tenantId, startsOn, endsOn])
+  @@map("school_years")
+}
+
+model CalendarEntry {
+  id                    String            @id @default(cuid()) @db.VarChar(30)
+  tenantId              String            @db.VarChar(30)
+  schoolYearId          String            @db.VarChar(30)
+  createdByMembershipId String            @db.VarChar(30)
+  kind                  CalendarEntryKind
+  title                 String            @db.VarChar(140)
+  startsOn              DateTime          @db.Date
+  endsOn                DateTime          @db.Date
+  archivedAt            DateTime?
+  createdAt             DateTime          @default(now())
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  schoolYear            SchoolYear        @relation(fields: [tenantId, schoolYearId], references: [tenantId, id], onDelete: Restrict)
+  createdBy             Membership        @relation("CalendarEntryCreator", fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, schoolYearId, startsOn, endsOn])
+  @@map("calendar_entries")
+}
+
+model Invitation {
+  id                    String         @id @default(cuid()) @db.VarChar(30)
+  tenantId              String         @db.VarChar(30)
+  createdByMembershipId String         @db.VarChar(30)
+  studentId             String?        @db.VarChar(30)
+  classroomId           String?        @db.VarChar(30)
+  sourceKey             String?        @db.VarChar(140)
+  email                 String         @db.VarChar(254)
+  displayName           String         @db.VarChar(100)
+  role                  MembershipRole
+  tokenHash             String         @unique @db.Char(64)
+  expiresAt             DateTime
+  acceptedAt            DateTime?
+  revokedAt             DateTime?
+  createdAt             DateTime       @default(now())
+  tenant                Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdBy             Membership     @relation("InvitationCreator", fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  student               Student?       @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  classroom             Classroom?     @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sourceKey])
+  @@index([tenantId, email, acceptedAt, revokedAt, expiresAt])
+  @@map("invitations")
+}
+
+model ImportBatch {
+  id                    String     @id @default(cuid()) @db.VarChar(30)
+  tenantId              String     @db.VarChar(30)
+  createdByMembershipId String     @db.VarChar(30)
+  sourceHash            String     @db.Char(64)
+  rowCount              Int
+  importedStudents      Int
+  createdInvitations    Int
+  rowErrors             Json
+  createdAt             DateTime   @default(now())
+  tenant                Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdBy             Membership @relation("ImportBatchCreator", fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, sourceHash])
+  @@index([tenantId, createdAt])
+  @@map("import_batches")
+}
+
+model OnboardingProgress {
+  id                    String     @id @default(cuid()) @db.VarChar(30)
+  tenantId              String     @db.VarChar(30)
+  updatedByMembershipId String     @db.VarChar(30)
+  step                  String     @db.VarChar(40)
+  completedAt           DateTime?
+  updatedAt             DateTime   @updatedAt
+  tenant                Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  updatedBy             Membership @relation("OnboardingUpdater", fields: [tenantId, updatedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, step])
+  @@index([tenantId, completedAt])
+  @@map("onboarding_progress")
+}
+
+model EnrollmentTransfer {
+  id                     String     @id @default(cuid()) @db.VarChar(30)
+  tenantId               String     @db.VarChar(30)
+  studentId              String     @db.VarChar(30)
+  fromEnrollmentId       String     @db.VarChar(30)
+  toEnrollmentId         String     @db.VarChar(30)
+  recordedByMembershipId String     @db.VarChar(30)
+  effectiveOn            DateTime   @db.Date
+  reason                 String?    @db.VarChar(500)
+  createdAt              DateTime   @default(now())
+  tenant                 Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  student                Student    @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  fromEnrollment         Enrollment @relation("TransferFrom", fields: [tenantId, fromEnrollmentId], references: [tenantId, id], onDelete: Restrict)
+  toEnrollment           Enrollment @relation("TransferTo", fields: [tenantId, toEnrollmentId], references: [tenantId, id], onDelete: Restrict)
+  recordedBy             Membership @relation("TransferRecorder", fields: [tenantId, recordedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, fromEnrollmentId])
+  @@index([tenantId, studentId, effectiveOn])
+  @@map("enrollment_transfers")
+}

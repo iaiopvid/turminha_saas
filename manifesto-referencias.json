@@ -1,0 +1,30 @@
+{
+  "version": "2.0",
+  "artifact_type": "Codex implementation specification; not application source or test results",
+  "specification": {
+    "file": "TURMINHA_SAAS_PROMPT_MESTRE_V2.md",
+    "sha256": "8537f3a8502b6a5d8ee4ed1b587bc4e8e958e02bd2d79d87487b353bd48e037d",
+    "numbered_sections": 28,
+    "milestones": 12,
+    "acceptance_scenarios": 80
+  },
+  "references": [
+    {
+      "file": "referencias/mundo_m_gico_do_maternal_i.html",
+      "original_filename": "mundo_m_gico_do_maternal_i.html",
+      "role": "Classroom and family visual/functional reference",
+      "lines": 1296,
+      "modified": false,
+      "sha256": "8838d7f576c2af61290e7f5cf0dc3754bd908a230900d14faa181f01fc5b4c72"
+    },
+    {
+      "file": "referencias/dashboard-admin.png",
+      "original_filename": "image.png",
+      "role": "Administrative dashboard visual reference",
+      "width": 1536,
+      "height": 1024,
+      "modified": false,
+      "sha256": "b3a53d892c7afcbc51eb1f807af9678dad581d181e6ec73ca5915ed7abc0d9e8"
+    }
+  ]
+}
