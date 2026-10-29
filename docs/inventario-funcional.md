@@ -6,7 +6,7 @@ Como não há aplicação, todos os módulos estão **ausentes no workspace**. O
 |---|---|---|---|
 | Portal comercial e páginas legais | Ausente | Não representado no HTML | Rotas comerciais; textos legais em rascunho/revisão |
 | Identidade/sessões/membership | Ausente | Login local e quickLogin inseguros | Sessão HttpOnly assinada, User global, Membership e verificação por tenant |
-| Escola/unidade/ano/turma | Ausente | Conteúdo fixo Maternal I | Entidades configuráveis e tenant-owned |
+| Escola/unidade/ano/turma | Parcial local | Gestão escolar cria escola/unidades/turmas e `/app/[escola]/turma` lista matrículas ativas com escopo e paginação | Completar edição de turma, perfis e experiência lúdica pública/privada |
 | Início/mural “Mundo Mágico” | Demo no HTML | Mural/cantinho, destaques editoriais e confete | Dados persistidos e projeções por audiência |
 | Nossa Turma/perfil | Demo no HTML | Cards e modal de citação/foto | Publicação explicitamente autorizada; sem cadastro público por padrão |
 | Galeria/filtros/lightbox | Demo no HTML | Todas/Atividades/Brincadeiras/Festas | Busca paginada e mídia segura; lightbox acessível |
@@ -14,7 +14,7 @@ Como não há aplicação, todos os módulos estão **ausentes no workspace**. O
 | Área familiar | Demo no HTML | Upload por FileReader, álbum em localStorage | Adulto com vínculo; escolha guardar privado ou enviar à escola |
 | Gestão de envios | Ausente | Painel antigo não é referência de admin | Fila de aprovação em páginas numeradas |
 | Dashboard docente | Ausente | Layout obrigatório é PNG administrativo | Sidebar violeta, quatro cards, atualizações, ações reais e frequência |
-| Gestão escolar, pedagogia e rotina | M2 parcial | Escola/unidades/turmas, capacidade, matrícula/lista de espera, atribuição de equipe e vínculo familiar inicial implementados | Importação, convites, calendário e transferência pendentes; pedagogia/rotina em M3–M4 |
+| Gestão escolar, pedagogia e rotina | M2 parcial; M3 iniciado | Gestão escolar, calendário, importação, convites, transferências e onboarding parciais; turma, diário interno com execução ligada opcionalmente a plano aprovado, observações individuais, evidências privadas com storage S3/local configurável e planejamento pedagógico versionado | Validar upload/download local e varredura; implementar autorização parental antes de qualquer compartilhamento, BNCC oficial verificada, relatórios e demais rotinas |
 | Comunicação/calendário/autorizações | Ausente | Escopo novo | Marco de comunicação após fluxos centrais |
 | Relatórios, exportações, livro | Ausente | Escopo novo | Jobs e autorização antes de entrega |
 | Billing, operação SaaS, suporte | Ausente | Escopo novo | Sandbox primeiro; nenhuma cobrança real |

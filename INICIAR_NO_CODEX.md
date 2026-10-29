@@ -11,7 +11,7 @@ Abra e analise as duas referências disponíveis no kit:
 
 Não misture os layouts: preserve o mundo lúdico do HTML na turma/família e utilize a sidebar violeta, cards claros, atualizações, ações rápidas e frequência da imagem na gestão. A marca é Turminha; dados e pessoas demonstrativos não são cadastros reais.
 
-A arquitetura está definida: Next.js fullstack com App Router, TypeScript, Tailwind CSS, shadcn/ui quando apropriado, MySQL/InnoDB e Prisma ORM. Todos os tenants/escolas compartilham uma única base de negócio e as mesmas tabelas por ambiente, com segregação por `tenantId`. Não criar banco, schema, tabelas, instalação ou conexão dedicada por tenant.
+A arquitetura está definida: Next.js fullstack com App Router, TypeScript, Tailwind CSS, shadcn/ui quando apropriado, MariaDB 10.10.7/InnoDB e Prisma ORM. Todos os tenants/escolas compartilham uma única base de negócio e as mesmas tabelas por ambiente, com segregação por `tenantId`. `provider = "mysql"` e o esquema `mysql://` são identificadores técnicos do Prisma/adapter MariaDB. Não criar banco, schema, tabelas, instalação ou conexão dedicada por tenant.
 
 O modelo é conceitualmente semelhante ao DeliveryFood e VitaMulher. Isso não autoriza compartilhar os bancos ou dados desses produtos. Só consulte seus códigos se estiverem efetivamente disponíveis e autorizados no workspace.
 
@@ -23,7 +23,7 @@ Implemente todos os módulos e critérios do arquivo mestre em marcos verticais:
 
 Copie a especificação para `docs/specs/turminha-saas.md`, preserve as referências em `docs/referencias/` e mantenha `docs/execucao.md` e a matriz de requisitos atualizados. Não sobrescreva AGENTS.md nem coloque o documento inteiro nele.
 
-Comece pelo M0 e avance para o M1. A primeira fatia deve demonstrar duas escolas no mesmo MySQL/schema, autenticação com vínculos, contexto de tenant validado e dados persistidos apresentados nos dois layouts. Continue os marcos conforme as condições da sessão; não pare apenas no planejamento.
+Comece pelo M0 e avance para o M1. A primeira fatia deve demonstrar duas escolas no mesmo MariaDB 10.10.7/schema, autenticação com vínculos, contexto de tenant validado e dados persistidos apresentados nos dois layouts. Continue os marcos conforme as condições da sessão; não pare apenas no planejamento.
 
 Não execute cobrança real, disparos em massa, alteração de DNS, deploy em produção ou migração destrutiva sem autorização específica. Não deixe agentes/processos temporários executando indefinidamente.
 

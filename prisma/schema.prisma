@@ -12,6 +12,11 @@ enum TenantStatus {
   SUSPENDED
 }
 
+enum TenantDomainStatus {
+  PENDING
+  VERIFIED
+}
+
 enum MembershipRole {
   SCHOOL_ADMIN
   COORDINATOR
@@ -42,6 +47,19 @@ enum AttendanceStatus {
   EXCUSED
 }
 
+enum JournalEntryStatus {
+  RECORDED
+}
+
+enum LearningPlanStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  CHANGES_REQUESTED
+  COMPLETED
+  ARCHIVED
+}
+
 enum NoticeVisibility {
   DRAFT
   PUBLISHED
@@ -51,6 +69,38 @@ enum MediaCategory {
   ACTIVITY
   PLAY
   EVENT
+}
+
+enum MediaConsentPurpose {
+  PRIVATE_STORAGE
+  SCHOOL_REVIEW
+}
+
+enum MediaPublicationStatus {
+  AWAITING_CONSENT
+  PUBLISHED
+  WITHDRAWN
+}
+
+enum JournalEvidenceConsentAction {
+  GRANTED
+  REVOKED
+}
+
+enum MediaSubmissionStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  CHANGES_REQUESTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum StorageOutboxStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
 }
 
 enum CalendarEntryKind {
@@ -79,8 +129,40 @@ model Tenant {
   calendarEntries        CalendarEntry[]
   onboarding             OnboardingProgress[]
   transfers              EnrollmentTransfer[]
+  emailVerifications     EmailVerification[]
+  mediaSubmissions       MediaSubmission[]
+  mediaConsents          MediaConsent[]
+  mediaPublications      MediaPublication[]
+  publicationConsents    MediaPublicationConsent[]
+  publicationEvents      MediaPublicationEvent[]
+  storageOutbox          StorageOutbox[]
+  mediaScanJobs          MediaScanJob[]
+  mediaReviewEvents      MediaReviewEvent[]
+  journalEntries         JournalEntry[]
+  journalParticipants    JournalParticipant[]
+  journalEvidence       JournalEvidence[]
+  journalEvidenceScanJobs JournalEvidenceScanJob[]
+  journalEvidenceFamilyShares JournalEvidenceFamilyShare[]
+  journalEvidenceFamilyConsents JournalEvidenceFamilyConsent[]
+  learningPlans         LearningPlan[]
+  domains               TenantDomain[]
 
   @@map("tenants")
+}
+
+model TenantDomain {
+  id                 String            @id @default(cuid()) @db.VarChar(30)
+  tenantId           String            @db.VarChar(30)
+  hostname           String            @unique @db.VarChar(253)
+  verificationToken  String            @unique @db.VarChar(64)
+  status             TenantDomainStatus @default(PENDING)
+  verifiedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  tenant             Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status])
+  @@map("tenant_domains")
 }
 
 model School {
@@ -91,6 +173,8 @@ model School {
   displayTeam    String   @default("Equipe pedagógica") @db.VarChar(180)
   timezone       String   @default("America/Sao_Paulo") @db.VarChar(80)
   publicStudents Boolean  @default(false)
+  brandPrimary   String   @default("#5524D1") @db.Char(7)
+  brandAccent    String   @default("#F38BBD") @db.Char(7)
   createdAt      DateTime @default(now())
   tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
@@ -114,13 +198,15 @@ model SchoolUnit {
 }
 
 model User {
-  id           String       @id @default(cuid()) @db.VarChar(30)
-  email        String       @unique @db.VarChar(254)
-  displayName  String       @db.VarChar(100)
-  passwordHash String       @db.VarChar(100)
-  memberships  Membership[]
-  sessions     Session[]
-  createdAt    DateTime     @default(now())
+  id                 String              @id @default(cuid()) @db.VarChar(30)
+  email              String              @unique @db.VarChar(254)
+  displayName        String              @db.VarChar(100)
+  passwordHash       String              @db.VarChar(100)
+  emailVerifiedAt    DateTime?
+  memberships        Membership[]
+  sessions           Session[]
+  emailVerifications EmailVerification[]
+  createdAt          DateTime            @default(now())
 
   @@map("users")
 }
@@ -138,23 +224,67 @@ model Session {
   @@map("sessions")
 }
 
+model RateLimitBucket {
+  keyHash         String   @id @db.Char(64)
+  windowStartedAt DateTime
+  attempts        Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt])
+  @@map("rate_limit_buckets")
+}
+
+model EmailVerification {
+  id           String     @id @default(cuid()) @db.VarChar(30)
+  tenantId     String     @db.VarChar(30)
+  userId       String     @db.VarChar(30)
+  invitationId String     @db.VarChar(30)
+  tokenHash    String     @unique @db.Char(64)
+  expiresAt    DateTime
+  createdAt    DateTime   @default(now())
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitation   Invitation @relation(fields: [tenantId, invitationId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@index([userId, createdAt])
+  @@index([tenantId, invitationId])
+  @@index([tenantId, expiresAt])
+  @@map("email_verifications")
+}
+
 model Membership {
-  id                  String               @id @default(cuid()) @db.VarChar(30)
-  tenantId            String               @db.VarChar(30)
-  userId              String               @db.VarChar(30)
-  role                MembershipRole
-  status              MembershipStatus     @default(ACTIVE)
-  createdAt           DateTime             @default(now())
-  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  user                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
-  classroomLinks      ClassroomStaff[]
-  guardianLinks       StudentGuardian[]
-  attendanceRecords   Attendance[]
-  sentInvitations     Invitation[]         @relation("InvitationCreator")
-  importBatches       ImportBatch[]        @relation("ImportBatchCreator")
-  calendarEntries     CalendarEntry[]      @relation("CalendarEntryCreator")
-  onboardingUpdates   OnboardingProgress[] @relation("OnboardingUpdater")
-  enrollmentTransfers EnrollmentTransfer[] @relation("TransferRecorder")
+  id                       String               @id @default(cuid()) @db.VarChar(30)
+  tenantId                 String               @db.VarChar(30)
+  userId                   String               @db.VarChar(30)
+  role                     MembershipRole
+  status                   MembershipStatus     @default(ACTIVE)
+  createdAt                DateTime             @default(now())
+  tenant                   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user                     User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  classroomLinks           ClassroomStaff[]
+  guardianLinks            StudentGuardian[]
+  attendanceRecords        Attendance[]
+  sentInvitations          Invitation[]         @relation("InvitationCreator")
+  importBatches            ImportBatch[]        @relation("ImportBatchCreator")
+  calendarEntries          CalendarEntry[]      @relation("CalendarEntryCreator")
+  onboardingUpdates        OnboardingProgress[] @relation("OnboardingUpdater")
+  enrollmentTransfers      EnrollmentTransfer[] @relation("TransferRecorder")
+  uploadedMedia            MediaAsset[]         @relation("MediaUploader")
+  mediaSubmissions         MediaSubmission[]
+  reviewedMediaSubmissions MediaSubmission[]    @relation("MediaReviewer")
+  mediaConsents            MediaConsent[]
+  mediaReviewEvents        MediaReviewEvent[]
+  requestedPublications    MediaPublication[] @relation("PublicationRequester")
+  publicationConsents      MediaPublicationConsent[]
+  publicationEvents        MediaPublicationEvent[]
+  uploadedJournalEvidence JournalEvidence[]
+  requestedJournalEvidenceShares JournalEvidenceFamilyShare[] @relation("JournalEvidenceShareRequester")
+  journalEvidenceConsents JournalEvidenceFamilyConsent[]
+  authoredJournalEntries   JournalEntry[] @relation("JournalAuthor")
+  authoredLearningPlans    LearningPlan[] @relation("PlanAuthor")
+  reviewedLearningPlans    LearningPlan[] @relation("PlanReviewer")
 
   @@unique([tenantId, userId])
   @@unique([tenantId, id])
@@ -177,6 +307,8 @@ model Classroom {
   notices     Announcement[]
   media       MediaAsset[]
   invitations Invitation[]
+  journalEntries JournalEntry[]
+  learningPlans LearningPlan[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, schoolYear, name])
@@ -212,6 +344,9 @@ model Student {
   invitations        Invitation[]
   transfers          EnrollmentTransfer[]
   externalReferences ImportedStudentSource[]
+  media              MediaAsset[]
+  submissions        MediaSubmission[]
+  publications       MediaPublication[]
 
   @@unique([tenantId, id])
   @@index([tenantId, displayName])
@@ -243,6 +378,8 @@ model Enrollment {
   student       Student              @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
   classroom     Classroom            @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
   attendance    Attendance[]
+  journalParticipations JournalParticipant[]
+  journalEvidenceShares JournalEvidenceFamilyShare[]
   transfersFrom EnrollmentTransfer[] @relation("TransferFrom")
   transfersTo   EnrollmentTransfer[] @relation("TransferTo")
 
@@ -250,6 +387,171 @@ model Enrollment {
   @@unique([tenantId, studentId, classroomId])
   @@index([tenantId, classroomId, status])
   @@map("enrollments")
+}
+
+model JournalEntry {
+  id                 String               @id @default(cuid()) @db.VarChar(30)
+  tenantId           String               @db.VarChar(30)
+  classroomId        String               @db.VarChar(30)
+  authorMembershipId String               @db.VarChar(30)
+  idempotencyKey    String?              @db.Char(36)
+  happenedAt         DateTime             @db.Date
+  title              String               @db.VarChar(160)
+  description        String               @db.Text
+  materials          String?              @db.VarChar(1000)
+  learningPlanId     String?              @db.VarChar(30)
+  status             JournalEntryStatus   @default(RECORDED)
+  createdAt          DateTime             @default(now())
+  tenant             Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classroom          Classroom            @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  author             Membership           @relation("JournalAuthor", fields: [tenantId, authorMembershipId], references: [tenantId, id], onDelete: Restrict)
+  participants       JournalParticipant[]
+  evidence           JournalEvidence[]
+  learningPlan       LearningPlan?        @relation(fields: [tenantId, classroomId, learningPlanId], references: [tenantId, classroomId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, classroomId, happenedAt, createdAt])
+  @@index([tenantId, authorMembershipId, happenedAt])
+  @@index([tenantId, learningPlanId])
+  @@unique([tenantId, authorMembershipId, idempotencyKey])
+  @@map("journal_entries")
+}
+
+model JournalParticipant {
+  id             String       @id @default(cuid()) @db.VarChar(30)
+  tenantId       String       @db.VarChar(30)
+  journalEntryId String       @db.VarChar(30)
+  enrollmentId   String       @db.VarChar(30)
+  observation    String?      @db.VarChar(1000)
+  createdAt      DateTime     @default(now())
+  tenant         Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  journalEntry   JournalEntry @relation(fields: [tenantId, journalEntryId], references: [tenantId, id], onDelete: Restrict)
+  enrollment     Enrollment   @relation(fields: [tenantId, enrollmentId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, journalEntryId, enrollmentId])
+  @@index([tenantId, enrollmentId, createdAt])
+  @@map("journal_participants")
+}
+
+model JournalEvidence {
+  id                 String       @id @db.VarChar(30)
+  tenantId           String       @db.VarChar(30)
+  journalEntryId     String       @db.VarChar(30)
+  uploadedByMembershipId String    @db.VarChar(30)
+  storageKey         String       @db.VarChar(300)
+  originalFilename   String       @db.VarChar(255)
+  contentType        String       @db.VarChar(100)
+  byteSize           Int
+  checksumSha256     String       @db.Char(64)
+  scanStatus         String       @default("PENDING") @db.VarChar(24)
+  status             String       @default("QUARANTINED") @db.VarChar(24)
+  createdAt          DateTime     @default(now())
+  tenant             Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  journalEntry       JournalEntry @relation(fields: [tenantId, journalEntryId], references: [tenantId, id], onDelete: Restrict)
+  uploadedBy         Membership   @relation(fields: [tenantId, uploadedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  scanJobs           JournalEvidenceScanJob[]
+  familyShares       JournalEvidenceFamilyShare[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, journalEntryId, createdAt])
+  @@index([tenantId, uploadedByMembershipId, createdAt])
+  @@map("journal_evidence")
+}
+
+model JournalEvidenceScanJob {
+  id                String              @id @default(cuid()) @db.VarChar(30)
+  tenantId          String              @db.VarChar(30)
+  journalEvidenceId String              @db.VarChar(30)
+  storageKey        String              @db.VarChar(300)
+  status            StorageOutboxStatus @default(PENDING)
+  attempts          Int                 @default(0)
+  lastError         String?             @db.VarChar(300)
+  lockedUntil       DateTime?
+  createdAt         DateTime            @default(now())
+  processedAt       DateTime?
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  evidence          JournalEvidence     @relation(fields: [tenantId, journalEvidenceId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt])
+  @@map("journal_evidence_scan_jobs")
+}
+
+model JournalEvidenceFamilyShare {
+  id                       String            @id @default(cuid()) @db.VarChar(30)
+  tenantId                 String            @db.VarChar(30)
+  journalEvidenceId        String            @db.VarChar(30)
+  enrollmentId             String            @db.VarChar(30)
+  requestedByMembershipId  String            @db.VarChar(30)
+  requestedAt              DateTime          @default(now())
+  closedAt                 DateTime?
+  tenant                   Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  evidence                 JournalEvidence   @relation(fields: [tenantId, journalEvidenceId], references: [tenantId, id], onDelete: Restrict)
+  enrollment               Enrollment        @relation(fields: [tenantId, enrollmentId], references: [tenantId, id], onDelete: Restrict)
+  requestedBy              Membership        @relation("JournalEvidenceShareRequester", fields: [tenantId, requestedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  consentEvents            JournalEvidenceFamilyConsent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, journalEvidenceId, enrollmentId])
+  @@index([tenantId, enrollmentId, closedAt, requestedAt])
+  @@index([tenantId, journalEvidenceId, closedAt])
+  @@map("journal_evidence_family_shares")
+}
+
+model JournalEvidenceFamilyConsent {
+  id             String                       @id @default(cuid()) @db.VarChar(30)
+  tenantId       String                       @db.VarChar(30)
+  shareId        String                       @db.VarChar(30)
+  membershipId   String                       @db.VarChar(30)
+  action         JournalEvidenceConsentAction
+  termsVersion   String                       @db.VarChar(40)
+  createdAt      DateTime                     @default(now())
+  tenant         Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  share          JournalEvidenceFamilyShare   @relation(fields: [tenantId, shareId], references: [tenantId, id], onDelete: Restrict)
+  membership     Membership                   @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, shareId, membershipId, createdAt])
+  @@index([tenantId, membershipId, createdAt])
+  @@map("journal_evidence_family_consents")
+}
+
+model LearningPlan {
+  id                   String             @id @db.VarChar(30)
+  tenantId             String             @db.VarChar(30)
+  classroomId          String             @db.VarChar(30)
+  authorMembershipId   String             @db.VarChar(30)
+  reviewerMembershipId String?            @db.VarChar(30)
+  threadId             String             @db.VarChar(30)
+  supersedesId         String?            @db.VarChar(30)
+  version              Int                @default(1)
+  title                String             @db.VarChar(160)
+  ageGroup             String             @db.VarChar(80)
+  periodStart          DateTime           @db.Date
+  periodEnd            DateTime           @db.Date
+  durationMinutes      Int?
+  materials            String?            @db.VarChar(1000)
+  intentions           String             @db.Text
+  status               LearningPlanStatus @default(DRAFT)
+  reviewComment        String?            @db.VarChar(1000)
+  reviewedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classroom            Classroom          @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  author               Membership         @relation("PlanAuthor", fields: [tenantId, authorMembershipId], references: [tenantId, id], onDelete: Restrict)
+  reviewer             Membership?        @relation("PlanReviewer", fields: [tenantId, reviewerMembershipId], references: [tenantId, id], onDelete: Restrict)
+  supersedes           LearningPlan?      @relation("LearningPlanRevision", fields: [tenantId, supersedesId], references: [tenantId, id], onDelete: Restrict)
+  revisions            LearningPlan[]     @relation("LearningPlanRevision")
+  executions           JournalEntry[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, classroomId, id])
+  @@index([tenantId, classroomId, status, periodStart])
+  @@index([tenantId, authorMembershipId, updatedAt])
+  @@index([tenantId, threadId, version])
+  @@map("learning_plans")
 }
 
 model StudentGuardian {
@@ -303,21 +605,211 @@ model Announcement {
 }
 
 model MediaAsset {
-  id          String        @id @default(cuid()) @db.VarChar(30)
-  tenantId    String        @db.VarChar(30)
-  classroomId String?       @db.VarChar(30)
-  title       String        @db.VarChar(160)
-  category    MediaCategory
-  storageKey  String?       @db.VarChar(300)
-  status      String        @default("PENDING") @db.VarChar(24)
-  publishedAt DateTime?
-  createdAt   DateTime      @default(now())
-  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  classroom   Classroom?    @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  id                     String             @id @default(cuid()) @db.VarChar(30)
+  tenantId               String             @db.VarChar(30)
+  classroomId            String?            @db.VarChar(30)
+  uploadedByMembershipId String?            @db.VarChar(30)
+  studentId              String?            @db.VarChar(30)
+  title                  String             @db.VarChar(160)
+  category               MediaCategory
+  storageKey             String?            @db.VarChar(300)
+  originalFilename       String?            @db.VarChar(255)
+  contentType            String?            @db.VarChar(100)
+  byteSize               Int?
+  checksumSha256         String?            @db.Char(64)
+  scanStatus             String             @default("PENDING") @db.VarChar(24)
+  status                 String             @default("PENDING") @db.VarChar(24)
+  publishedAt            DateTime?
+  createdAt              DateTime           @default(now())
+  tenant                 Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  classroom              Classroom?         @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  uploadedBy             Membership?        @relation("MediaUploader", fields: [tenantId, uploadedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  student                Student?           @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  submissions            MediaSubmission[]
+  consents               MediaConsent[]
+  scanJobs               MediaScanJob[]
+  reviewEvents           MediaReviewEvent[]
+  publications           MediaPublication[]
 
   @@unique([tenantId, id])
   @@index([tenantId, classroomId, publishedAt, id])
+  @@index([tenantId, classroomId, status, scanStatus, createdAt])
+  @@index([tenantId, uploadedByMembershipId, createdAt])
+  @@index([tenantId, studentId, uploadedByMembershipId, status, createdAt])
   @@map("media_assets")
+}
+
+model MediaSubmission {
+  id                      String                @id @default(cuid()) @db.VarChar(30)
+  tenantId                String                @db.VarChar(30)
+  mediaAssetId            String                @db.VarChar(30)
+  studentId               String                @db.VarChar(30)
+  submittedByMembershipId String                @db.VarChar(30)
+  status                  MediaSubmissionStatus @default(SUBMITTED)
+  intendedAudience        String                @default("SCHOOL_REVIEW") @db.VarChar(40)
+  version                 Int                   @default(1)
+  threadId                String?               @db.VarChar(30)
+  supersedesId            String?               @db.VarChar(30)
+  reviewerMembershipId    String?               @db.VarChar(30)
+  reviewComment           String?               @db.VarChar(1000)
+  reviewedAt              DateTime?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  tenant                  Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  mediaAsset              MediaAsset            @relation(fields: [tenantId, mediaAssetId], references: [tenantId, id], onDelete: Restrict)
+  student                 Student               @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  submittedBy             Membership            @relation(fields: [tenantId, submittedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  reviewer                Membership?           @relation("MediaReviewer", fields: [tenantId, reviewerMembershipId], references: [tenantId, id], onDelete: Restrict)
+  supersedes              MediaSubmission?      @relation("MediaSubmissionVersions", fields: [tenantId, supersedesId], references: [tenantId, id], onDelete: Restrict)
+  nextVersions            MediaSubmission[]     @relation("MediaSubmissionVersions")
+  events                  MediaReviewEvent[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, studentId, status, createdAt])
+  @@index([tenantId, submittedByMembershipId, createdAt])
+  @@index([tenantId, supersedesId])
+  @@index([tenantId, threadId, version])
+  @@map("media_submissions")
+}
+
+model MediaReviewEvent {
+  id                String                 @id @default(cuid()) @db.VarChar(30)
+  tenantId          String                 @db.VarChar(30)
+  submissionId      String                 @db.VarChar(30)
+  actorMembershipId String                 @db.VarChar(30)
+  actorDisplayName  String                 @db.VarChar(100)
+  actorRole         MembershipRole
+  fromStatus        MediaSubmissionStatus?
+  toStatus          MediaSubmissionStatus
+  comment           String?                @db.VarChar(1000)
+  createdAt         DateTime               @default(now())
+  tenant            Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  submission        MediaSubmission        @relation(fields: [tenantId, submissionId], references: [tenantId, id], onDelete: Restrict)
+  actor             Membership             @relation(fields: [tenantId, actorMembershipId], references: [tenantId, id], onDelete: Restrict)
+  mediaAsset        MediaAsset?            @relation(fields: [mediaAssetId], references: [id])
+  mediaAssetId      String?                @db.VarChar(30)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, submissionId, createdAt])
+  @@map("media_review_events")
+}
+
+model MediaConsent {
+  id           String              @id @default(cuid()) @db.VarChar(30)
+  tenantId     String              @db.VarChar(30)
+  mediaAssetId String              @db.VarChar(30)
+  membershipId String              @db.VarChar(30)
+  purpose      MediaConsentPurpose
+  grantedAt    DateTime            @default(now())
+  revokedAt    DateTime?
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  mediaAsset   MediaAsset          @relation(fields: [tenantId, mediaAssetId], references: [tenantId, id], onDelete: Restrict)
+  membership   Membership          @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, mediaAssetId, membershipId, purpose])
+  @@index([tenantId, membershipId, purpose, revokedAt])
+  @@map("media_consents")
+}
+
+model MediaPublication {
+  id                    String                  @id @default(cuid()) @db.VarChar(30)
+  tenantId              String                  @db.VarChar(30)
+  mediaAssetId           String                  @db.VarChar(30)
+  studentId              String                  @db.VarChar(30)
+  requestedByMembershipId String                 @db.VarChar(30)
+  status                 MediaPublicationStatus @default(AWAITING_CONSENT)
+  createdAt              DateTime                @default(now())
+  publishedAt            DateTime?
+  withdrawnAt            DateTime?
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  mediaAsset             MediaAsset              @relation(fields: [tenantId, mediaAssetId], references: [tenantId, id], onDelete: Restrict)
+  student                Student                 @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  requester              Membership              @relation("PublicationRequester", fields: [tenantId, requestedByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  consents               MediaPublicationConsent[]
+  events                 MediaPublicationEvent[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, studentId, status, createdAt])
+  @@index([tenantId, mediaAssetId, createdAt])
+  @@map("media_publications")
+}
+
+model MediaPublicationConsent {
+  id             String           @id @default(cuid()) @db.VarChar(30)
+  tenantId       String           @db.VarChar(30)
+  publicationId  String           @db.VarChar(30)
+  membershipId   String           @db.VarChar(30)
+  grantedAt      DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  publication    MediaPublication @relation(fields: [tenantId, publicationId], references: [tenantId, id], onDelete: Restrict)
+  membership     Membership       @relation(fields: [tenantId, membershipId], references: [tenantId, id], onDelete: Restrict)
+  events         MediaPublicationEvent[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, publicationId, membershipId])
+  @@index([tenantId, membershipId, revokedAt])
+  @@map("media_publication_consents")
+}
+
+model MediaPublicationEvent {
+  id                String                    @id @default(cuid()) @db.VarChar(30)
+  tenantId          String                    @db.VarChar(30)
+  publicationId     String                    @db.VarChar(30)
+  actorMembershipId String                    @db.VarChar(30)
+  consentId         String?                   @db.VarChar(30)
+  action            String                    @db.VarChar(30)
+  actorDisplayName  String                    @db.VarChar(100)
+  actorRole         MembershipRole
+  detail            String?                   @db.VarChar(500)
+  createdAt         DateTime                  @default(now())
+  tenant            Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  publication       MediaPublication          @relation(fields: [tenantId, publicationId], references: [tenantId, id], onDelete: Restrict)
+  actor             Membership                @relation(fields: [tenantId, actorMembershipId], references: [tenantId, id], onDelete: Restrict)
+  consent           MediaPublicationConsent?  @relation(fields: [tenantId, consentId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, publicationId, createdAt])
+  @@map("media_publication_events")
+}
+
+model StorageOutbox {
+  id             String              @id @default(cuid()) @db.VarChar(30)
+  tenantId       String              @db.VarChar(30)
+  idempotencyKey String              @db.VarChar(180)
+  storageKey     String              @db.VarChar(300)
+  status         StorageOutboxStatus @default(PENDING)
+  attempts       Int                 @default(0)
+  lastError      String?             @db.VarChar(300)
+  lockedUntil    DateTime?
+  createdAt      DateTime            @default(now())
+  processedAt    DateTime?
+  tenant         Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, status, createdAt])
+  @@map("storage_outbox")
+}
+
+model MediaScanJob {
+  id           String              @id @default(cuid()) @db.VarChar(30)
+  tenantId     String              @db.VarChar(30)
+  mediaAssetId String              @db.VarChar(30)
+  storageKey   String              @db.VarChar(300)
+  status       StorageOutboxStatus @default(PENDING)
+  attempts     Int                 @default(0)
+  lastError    String?             @db.VarChar(300)
+  lockedUntil  DateTime?
+  createdAt    DateTime            @default(now())
+  processedAt  DateTime?
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  mediaAsset   MediaAsset          @relation(fields: [tenantId, mediaAssetId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, mediaAssetId])
+  @@index([tenantId, status, createdAt])
+  @@map("media_scan_jobs")
 }
 
 model SchoolYear {
@@ -358,24 +850,25 @@ model CalendarEntry {
 }
 
 model Invitation {
-  id                    String         @id @default(cuid()) @db.VarChar(30)
-  tenantId              String         @db.VarChar(30)
-  createdByMembershipId String         @db.VarChar(30)
-  studentId             String?        @db.VarChar(30)
-  classroomId           String?        @db.VarChar(30)
-  sourceKey             String?        @db.VarChar(140)
-  email                 String         @db.VarChar(254)
-  displayName           String         @db.VarChar(100)
+  id                    String              @id @default(cuid()) @db.VarChar(30)
+  tenantId              String              @db.VarChar(30)
+  createdByMembershipId String              @db.VarChar(30)
+  studentId             String?             @db.VarChar(30)
+  classroomId           String?             @db.VarChar(30)
+  sourceKey             String?             @db.VarChar(140)
+  email                 String              @db.VarChar(254)
+  displayName           String              @db.VarChar(100)
   role                  MembershipRole
-  tokenHash             String         @unique @db.Char(64)
+  tokenHash             String              @unique @db.Char(64)
   expiresAt             DateTime
   acceptedAt            DateTime?
   revokedAt             DateTime?
-  createdAt             DateTime       @default(now())
-  tenant                Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  createdBy             Membership     @relation("InvitationCreator", fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
-  student               Student?       @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
-  classroom             Classroom?     @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  createdAt             DateTime            @default(now())
+  tenant                Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  createdBy             Membership          @relation("InvitationCreator", fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  student               Student?            @relation(fields: [tenantId, studentId], references: [tenantId, id], onDelete: Restrict)
+  classroom             Classroom?          @relation(fields: [tenantId, classroomId], references: [tenantId, id], onDelete: Restrict)
+  emailVerifications    EmailVerification[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, sourceKey])

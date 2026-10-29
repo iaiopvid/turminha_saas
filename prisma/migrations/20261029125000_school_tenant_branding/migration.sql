@@ -1,0 +1,3 @@
+ALTER TABLE `schools`
+  ADD COLUMN `brandPrimary` CHAR(7) NOT NULL DEFAULT '#5524D1',
+  ADD COLUMN `brandAccent` CHAR(7) NOT NULL DEFAULT '#F38BBD';

@@ -21,7 +21,7 @@ O arquivo mestre substitui a versão anterior como contrato de implementação. 
 
 ## Decisões fechadas
 
-A stack é Next.js fullstack/App Router, TypeScript, Tailwind, shadcn/ui quando útil, MySQL/InnoDB e Prisma. Uma base de negócio e as mesmas tabelas atendem todos os tenants de cada ambiente; o isolamento usa tenantId, vínculo, políticas e constraints. Não existe banco por escola nesta etapa. Separar ambientes de desenvolvimento, demonstração, homologação e produção continua necessário.
+A stack é Next.js fullstack/App Router, TypeScript, Tailwind, shadcn/ui quando útil, MariaDB 10.10.7/InnoDB e Prisma. Uma base de negócio e as mesmas tabelas atendem todos os tenants de cada ambiente; o isolamento usa tenantId, vínculo, políticas e constraints. Não existe banco por escola nesta etapa. `provider = "mysql"` e `mysql://` são os identificadores exigidos pelo Prisma/adapter MariaDB, não indicam servidor MySQL. Separar ambientes de desenvolvimento, demonstração, homologação e produção continua necessário.
 
 DeliveryFood e VitaMulher são referências do modelo SaaS, não autorização para compartilhar seus bancos, dados, usuários ou código indisponível. Cada escola é um tenant e pode ter unidades/turmas. Contas adultas possuem vínculos; crianças e acervos escolares permanecem locais ao tenant.
 

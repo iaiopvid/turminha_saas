@@ -1,5 +1,5 @@
 import "server-only";
-import { AttendanceStatus, EnrollmentStatus, MembershipRole, NoticeVisibility } from "@/generated/prisma/client";
+import { AttendanceStatus, EnrollmentStatus, MediaSubmissionStatus, MembershipRole, NoticeVisibility } from "@/generated/prisma/client";
 import type { TenantContext } from "@/server/tenancy/context";
 import { prisma } from "@/server/db/prisma";
 
@@ -22,12 +22,12 @@ export async function getTeacherDashboard(context: TenantContext, classroomId?: 
   const classes = await listAuthorizedClassrooms(context);
   const selected = classroomId ? classes.find((classroom) => classroom.id === classroomId) : classes[0];
   if (classroomId && !selected) return null;
-  if (!selected) return { classroom: null, classrooms: classes, students: [], metrics: { students: 0, present: 0, absent: 0, marked: 0, photosToday: 0 }, notice: null };
+  if (!selected) return { classroom: null, classrooms: classes, students: [], metrics: { students: 0, present: 0, absent: 0, marked: 0, pending: 0, photosToday: 0, dayOff: null }, notice: null };
 
   const classDate = new Intl.DateTimeFormat("en-CA", { timeZone: context.timezone }).format(new Date());
   const dateStart = new Date(`${classDate}T00:00:00.000Z`);
   const dateEnd = new Date(`${classDate}T23:59:59.999Z`);
-  const [enrollmentCount, enrollments, attendance, photosToday, notice] = await Promise.all([
+  const [enrollmentCount, enrollments, attendance, photosToday, notice, schoolYear] = await Promise.all([
     prisma.enrollment.count({ where: { tenantId: context.tenantId, classroomId: selected.id, status: EnrollmentStatus.ACTIVE } }),
     prisma.enrollment.findMany({
       where: { tenantId: context.tenantId, classroomId: selected.id, status: EnrollmentStatus.ACTIVE },
@@ -36,18 +36,38 @@ export async function getTeacherDashboard(context: TenantContext, classroomId?: 
       take: 100,
     }),
     prisma.attendance.findMany({
-      where: { tenantId: context.tenantId, classDate: { gte: dateStart, lte: dateEnd }, enrollment: { classroomId: selected.id } },
+      where: { tenantId: context.tenantId, classDate: { gte: dateStart, lte: dateEnd }, enrollment: { tenantId: context.tenantId, classroomId: selected.id, status: EnrollmentStatus.ACTIVE } },
       select: { enrollmentId: true, status: true },
     }),
     prisma.mediaAsset.count({
-      where: { tenantId: context.tenantId, classroomId: selected.id, status: "AVAILABLE", createdAt: { gte: dateStart, lte: dateEnd } },
+      where: {
+        tenantId: context.tenantId, createdAt: { gte: dateStart, lte: dateEnd }, scanStatus: "CLEAN", storageKey: { not: null }, contentType: { startsWith: "image/" },
+        OR: [
+          { classroomId: selected.id, status: { in: ["PENDING", "PUBLISHED", "AVAILABLE"] } },
+          {
+            classroomId: null, status: "PRIVATE",
+            consents: { some: { tenantId: context.tenantId, purpose: "SCHOOL_REVIEW", revokedAt: null } },
+            submissions: { some: {
+              tenantId: context.tenantId, status: MediaSubmissionStatus.APPROVED,
+              student: { enrollments: { some: { tenantId: context.tenantId, classroomId: selected.id, status: EnrollmentStatus.ACTIVE } } },
+              submittedBy: { guardianLinks: { some: { tenantId: context.tenantId, approved: true, revokedAt: null } } },
+            } },
+          },
+        ],
+      },
     }),
     prisma.announcement.findFirst({
       where: { tenantId: context.tenantId, classroomId: selected.id, visibility: NoticeVisibility.PUBLISHED },
       select: { title: true, body: true, publishedAt: true },
       orderBy: { publishedAt: "desc" },
     }),
+    prisma.schoolYear.findFirst({ where: { tenantId: context.tenantId, year: selected.schoolYear }, select: { id: true } }),
   ]);
+  const dayOff = schoolYear ? await prisma.calendarEntry.findFirst({
+    where: { tenantId: context.tenantId, schoolYearId: schoolYear.id, kind: { in: ["HOLIDAY", "RECESS"] }, archivedAt: null, startsOn: { lte: dateStart }, endsOn: { gte: dateStart } },
+    select: { title: true, kind: true },
+    orderBy: [{ startsOn: "asc" }, { id: "asc" }],
+  }) : null;
   const byEnrollment = new Map(attendance.map((entry) => [entry.enrollmentId, entry.status]));
   const students = enrollments.map((enrollment) => ({
     id: enrollment.student.id,
@@ -61,7 +81,7 @@ export async function getTeacherDashboard(context: TenantContext, classroomId?: 
     classrooms: classes,
     students,
     notice,
-    metrics: { students: enrollmentCount, present, absent, marked: attendance.length, photosToday },
+    metrics: { students: enrollmentCount, present, absent, marked: attendance.length, pending: Math.max(0, enrollmentCount - attendance.length), photosToday, dayOff },
   };
 }
 
@@ -83,7 +103,7 @@ export async function getPublicClassroom(slug: string) {
   if (!tenant?.school) return null;
   const classroom = tenant.classrooms[0] ?? null;
   const [studentCount, gallery, notices] = await Promise.all([
-    classroom ? prisma.enrollment.count({ where: { tenantId: tenant.id, classroomId: classroom.id, status: EnrollmentStatus.ACTIVE } }) : 0,
+    classroom && tenant.school.publicStudents ? prisma.enrollment.count({ where: { tenantId: tenant.id, classroomId: classroom.id, status: EnrollmentStatus.ACTIVE } }) : null,
     classroom ? prisma.mediaAsset.findMany({
       where: { tenantId: tenant.id, classroomId: classroom.id, status: "AVAILABLE", publishedAt: { not: null } },
       select: { id: true, title: true, category: true, publishedAt: true },

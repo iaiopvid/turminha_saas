@@ -1,6 +1,12 @@
 @import "@fontsource-variable/fredoka";
 @import "@fontsource/poppins/400.css";
 @import "@fontsource/poppins/500.css";
+
+.tenant-theme .button-primary{background:var(--tenant-primary);box-shadow:0 8px 18px color-mix(in srgb,var(--tenant-primary),transparent 78%)}
+.tenant-theme .admin-sidebar{background:linear-gradient(165deg,var(--tenant-primary),color-mix(in srgb,var(--tenant-primary),#000 18%))}
+.tenant-theme .admin-role-tag{background:var(--tenant-accent)}
+.tenant-theme .brand-mark{background:linear-gradient(135deg,var(--tenant-primary),var(--tenant-accent))}
+.tenant-theme .tenant-brand-text{color:var(--tenant-primary)}
 @import "@fontsource/poppins/600.css";
 @import "@fontsource/poppins/700.css";
 @import "tailwindcss";
@@ -13,3 +19,6 @@
 @media(max-width:700px){.admin-menu-toggle{position:fixed;top:.8rem;left:.75rem;z-index:60;display:flex;align-items:center;gap:.35rem;border:0;border-radius:.8rem;background:#5321ce;padding:.6rem .75rem;color:white;font-size:.78rem;font-weight:750;box-shadow:0 5px 16px #3c1a9250}.admin-sidebar{width:min(290px,85vw);transform:translateX(-105%);transition:transform .2s}.admin-sidebar-open{transform:translateX(0)}.drawer-backdrop{position:fixed;inset:0;z-index:30;display:block;border:0;background:#11182780}.admin-main{margin-left:0}.admin-topbar{min-height:4.2rem;padding:1rem 1rem 1rem 6rem}.admin-content{padding:1.25rem 1rem 2rem}.dashboard-heading{align-items:stretch;flex-direction:column}.class-select{width:100%}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.metric-card{min-height:7.2rem;gap:.55rem;padding:.75rem}.metric-icon{width:2.65rem;height:2.65rem;border-radius:.85rem}.metric-icon svg{width:1.25rem;height:1.25rem}.metric-card p{font-size:.72rem}.metric-value{font-size:1.5rem}.metric-card small{font-size:.61rem}.dashboard-card{padding:1rem}.attendance-list{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:1rem}.admin-topbar p{font-size:.72rem}.glass-panel{padding:1.1rem;border-radius:1.6rem}.section-title{font-size:1.1rem}}
 @media(max-width:380px){.metric-grid{grid-template-columns:1fr}.topbar-avatar{display:none}.attendance-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}.admin-drawer-heading{position:relative}.admin-drawer-close{display:none}.admin-sidebar[aria-hidden="true"]{visibility:hidden}.confirm-dialog{width:min(92vw,32rem);max-width:none;border:0;border-radius:1.25rem;padding:0;background:transparent;color:var(--ink);overflow:visible}.confirm-dialog::backdrop{background:#11182799;backdrop-filter:blur(2px)}.confirm-dialog-card{border:1px solid #e8eaf0;border-radius:1.25rem;background:white;padding:1.4rem;box-shadow:0 24px 70px #11182745}.confirm-dialog form{display:inline-flex}.confirm-dialog button{min-height:2.75rem}
+@media(max-width:700px){.admin-sidebar[aria-hidden="true"]{visibility:hidden}.admin-sidebar[role="dialog"]{visibility:visible}.admin-drawer-heading{display:flex;align-items:center;justify-content:center}.admin-drawer-heading .admin-brand{padding-right:2.8rem}.admin-drawer-close{position:absolute;top:.6rem;right:.15rem;display:grid;width:2.6rem;height:2.6rem;place-items:center;border:1px solid #ffffff55;border-radius:.8rem;background:#ffffff18;color:white}.admin-sidebar-open{overscroll-behavior:contain}.attendance-card,.admin-content,.dashboard-card{min-width:0}.attendance-list li{min-width:0}.attendance-status{max-width:100%;white-space:normal;overflow-wrap:anywhere}}
+@media(max-width:380px){.admin-content{padding-inline:.75rem}.dashboard-card{padding:.8rem}.confirm-dialog-card{padding:1.1rem}.attendance-list{gap:.5rem}}

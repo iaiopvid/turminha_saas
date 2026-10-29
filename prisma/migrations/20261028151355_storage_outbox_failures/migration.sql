@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `storage_outbox` MODIFY `status` ENUM('PENDING', 'PROCESSING', 'DONE', 'FAILED') NOT NULL DEFAULT 'PENDING';

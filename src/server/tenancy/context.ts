@@ -2,6 +2,7 @@ import "server-only";
 import { MembershipRole } from "@/generated/prisma/client";
 import { getSessionPrincipal } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
+import { requestHostMatchesTenant } from "@/server/tenancy/domains";
 
 export type TenantContext = Readonly<{
   tenantId: string;
@@ -30,6 +31,7 @@ export async function resolveTenantContext(slug: string, allowedRoles?: Membersh
     select: { id: true, slug: true, school: { select: { name: true, timezone: true } } },
   });
   if (!tenant?.school) throw new ContextError(404, "Escola não encontrada.");
+  if (!await requestHostMatchesTenant(tenant.id)) throw new ContextError(404, "Host nao autorizado para esta escola.");
 
   const membership = await prisma.membership.findFirst({
     where: { tenantId: tenant.id, userId: principal.user.id, status: "ACTIVE" },

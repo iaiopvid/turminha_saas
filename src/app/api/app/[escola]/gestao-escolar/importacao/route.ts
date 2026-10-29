@@ -7,7 +7,6 @@ import { prisma } from "@/server/db/prisma";
 import { CsvFormatError, importRowsSchema, parseImportCsv, type ImportRow } from "@/server/imports/student-csv";
 
 type RowIssue = { line: number; code: string; message: string };
-type ClassInfo = { id: string; name: string; schoolYear: number; capacity: number };
 const requestSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("preview"), csv: z.string().min(1).max(1_000_000) }),
   z.object({ action: z.literal("dry-run"), rows: importRowsSchema }),
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (parsed.data.action !== "commit") return NextResponse.json({ rows, rowIssues: validation.rowIssues, valid: validation.issues.length === 0, mode: parsed.data.action, errorCount: validation.issues.length }, { headers: { "cache-control": "no-store" } });
   if (validation.issues.length) return NextResponse.json({ error: "Corrija todas as linhas antes de importar.", rowIssues: validation.rowIssues, valid: false }, { status: 422, headers: { "cache-control": "no-store" } });
 
-  const canonicalRows = rows.map(({ line: _line, ...row }) => row);
+  const canonicalRows = rows.map(({ recordType, sourceId, name, email, studentSourceId, schoolYear, classroomName, role }) => ({ recordType, sourceId, name, email, studentSourceId, schoolYear, classroomName, role }));
   const sourceHash = createHash("sha256").update(JSON.stringify(canonicalRows)).digest("hex");
   const prior = await prisma.importBatch.findUnique({ where: { tenantId_sourceHash: { tenantId: context.tenantId, sourceHash } }, select: { id: true, rowCount: true, importedStudents: true, createdInvitations: true } });
   if (prior) return NextResponse.json({ alreadyImported: true, batchId: prior.id, rowCount: prior.rowCount, importedStudents: prior.importedStudents, createdInvitations: prior.createdInvitations, invitationUrls: [] }, { headers: { "cache-control": "no-store" } });

@@ -1,21 +1,21 @@
 name: turminha-local
 services:
-  mysql:
-    image: mysql:8.4.13
+  mariadb:
+    image: mariadb:10.10.7
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: turminha_saas_dev
-      MYSQL_USER: turminha
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev-only-change-me}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev-only-root-change-me}
+      MARIADB_DATABASE: turminha_saas_dev
+      MARIADB_USER: turminha
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-dev-only-change-me}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-dev-only-root-change-me}
       TZ: America/Sao_Paulo
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mariadb-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p\"$${MARIADB_ROOT_PASSWORD}\" --silent"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -88,7 +88,7 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
+  mariadb-data:
   redis-data:
   storage-data:
   clamav-data:

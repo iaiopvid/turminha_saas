@@ -1,13 +1,15 @@
 # PROMPT MESTRE — TURMINHA SaaS
 
-**Versão:** 2.0 — 26 de outubro de 2026 | consolidação integral com referências anexadas  
-**Destino:** Codex executando no repositório do projeto.  
-**Natureza:** especificação de implementação, evolução e validação de produto; não é apenas um pedido de protótipo.  
-**Projeto de origem:** Turminha / Jardim de Memórias — Maternal I do Colégio Pilares, professoras Lane e Helen.  
+**Versão:** 2.0 — 26 de outubro de 2026 | consolidação integral com referências anexadas
+**Destino:** Codex executando no repositório do projeto.
+**Natureza:** especificação de implementação, evolução e validação de produto; não é apenas um pedido de protótipo.
+**Projeto de origem:** Turminha / Jardim de Memórias — Maternal I do Colégio Pilares, professoras Lane e Helen.
 **Referência pública de contexto:** `https://turminha.mineironomade.com/`.
 **Referência obrigatória da turma/família:** `referencias/mundo_m_gico_do_maternal_i.html`.
 **Referência obrigatória da gestão:** `referencias/dashboard-admin.png` (a imagem originalmente anexada como `image.png`, 1536 × 1024).
-**Arquitetura obrigatória:** aplicação SaaS compartilhada + um banco MySQL de negócio por ambiente + mesmas tabelas para todos os tenants, segregadas por `tenantId`.
+**Arquitetura obrigatória:** aplicação SaaS compartilhada + um banco MariaDB 10.10.7 de negócio por ambiente + mesmas tabelas para todos os tenants, segregadas por `tenantId`.
+
+**Compatibilidade do ambiente alvo (decisão posterior):** este projeto usa MariaDB 10.10.7 com InnoDB como banco compartilhado por ambiente. Esta decisão substitui todas as referências a MySQL nesta especificação. O `provider = "mysql"` do Prisma e o esquema de URL `mysql://` são nomes de dialeto/protocolo exigidos pelo conector e não significam que o servidor seja MySQL.
 
 Esta versão é completa e substitui a versão 1.0 como especificação de implementação. Não depende do histórico do chat. As referências são insumos de design/fluxo, não prova de um backend já implementado. Arquivos de referência devem permanecer fora de `public/` e não ser publicados como a aplicação final.
 
@@ -16,7 +18,7 @@ Esta versão é completa e substitui a versão 1.0 como especificação de imple
 > 2. **Shared database + shared schema:** todas as escolas usam a mesma base de negócio e as mesmas tabelas no ambiente. Não criar banco, schema, conjunto de tabelas, container, instalação ou conexão dedicada por escola.
 > 3. “Mesmo modelo” não significa compartilhar fisicamente a base, os usuários ou os dados do Turminha com DeliveryFood/VitaMulher. São produtos independentes; não implementar integração ou SSO entre eles sem requisito específico.
 > 4. Turma e família seguem o HTML anexado. Administração escolar e painel da professora seguem a imagem anexada. Não aplicar o dashboard roxo ao portal lúdico inteiro, nem aplicar o painel antigo do HTML ao novo dashboard.
-> 5. A stack é Next.js fullstack/App Router, TypeScript, Tailwind CSS, shadcn/ui quando necessário, MySQL/InnoDB e Prisma. Não substituir a stack por conveniência do agente.
+> 5. A stack é Next.js fullstack/App Router, TypeScript, Tailwind CSS, shadcn/ui quando necessário, MariaDB 10.10.7/InnoDB e Prisma. Não substituir a stack por conveniência do agente.
 > 6. Segurança e privacidade prevalecem sobre comportamentos demonstrativos inseguros; fidelidade visual não autoriza reproduzir senhas em texto, login falso ou exposição de crianças.
 > 7. Implementar software real por marcos verificáveis. O escopo completo continua obrigatório; um MVP, um protótipo ou um scaffold não equivale à entrega integral.
 
@@ -171,7 +173,7 @@ O arquivo demonstra comportamentos; não é base de segurança. Substitua obriga
 
 - `quickLogin`, conta `admin/123` e comparação local de senhas por autenticação real. Demo isolada pode ter acesso demonstrativo controlado, nunca bypass no ambiente de clientes.
 - Campos e tabela que mostram a senha por convites, status de acesso, reenvio de convite e recuperação segura. Administradores não consultam a senha de ninguém.
-- `localStorage` nas chaves `maternal_students`, `maternal_gallery` e `maternal_notice` por persistência MySQL e serviços autenticados.
+- `localStorage` nas chaves `maternal_students`, `maternal_gallery` e `maternal_notice` por persistência MariaDB 10.10.7 e serviços autenticados.
 - `FileReader.readAsDataURL` usado como armazenamento por upload privado e metadados de arquivo; prévia local temporária pode existir, sem persistir arquivos base64 no banco/browser.
 - `Date.now()` como identificador confiável por estratégia de IDs do servidor; opacidade de ID não substitui autorização.
 - `innerHTML` construído com entradas do usuário por renderização segura/validação; rich text permitido exige sanitização.
@@ -237,14 +239,14 @@ No menu administrativo, agrupe módulos em **Visão geral**, **Minha escola/Minh
 
 - Next.js fullstack com App Router, React e TypeScript em modo estrito.
 - Tailwind CSS; shadcn/ui quando útil, estilizado com a identidade do produto.
-- MySQL com InnoDB e Prisma ORM, com schema, migrations, seed e testes de integração reais.
+- MariaDB 10.10.7 com InnoDB e Prisma ORM, com schema, migrations, seed e testes de integração reais.
 - Backend integrado no Next.js, com Route Handlers e/ou Server Actions coerentes com a aplicação existente.
 - Validação de entradas no servidor, preferencialmente com Zod; reaproveite contratos tipados entre camadas.
-- Armazenamento de arquivos em serviço compatível com S3, privado por padrão. MySQL guarda metadados e relacionamentos, não grandes arquivos binários.
+- Armazenamento de arquivos em serviço compatível com S3, privado por padrão. MariaDB 10.10.7 guarda metadados e relacionamentos, não grandes arquivos binários.
 - Jobs duráveis para tarefas pesadas. Use Redis e BullMQ quando compatíveis com o ambiente escolhido, com worker do mesmo repositório e regras de negócio compartilhadas.
 - E-mail por adaptador SMTP/provedor; notificações internas persistentes; Web Push quando disponível e autorizado pelo usuário.
 
-Não substituir MySQL por PostgreSQL, SQLite, Firebase ou banco em memória. Não usar `localStorage` como banco da aplicação. Não criar backend paralelo em NestJS ou outro microsserviço sem necessidade aprovada. Um worker do mesmo produto não deve virar um segundo backend de negócio.
+Não substituir MariaDB 10.10.7 por PostgreSQL, SQLite, Firebase ou banco em memória. Não usar `localStorage` como banco da aplicação. Não criar backend paralelo em NestJS ou outro microsserviço sem necessidade aprovada. Um worker do mesmo produto não deve virar um segundo backend de negócio.
 
 Verifique versões estáveis, suportadas, compatibilidade e avisos de segurança na documentação oficial durante a execução. Respeite o lockfile; não atualize tudo automaticamente nem misture exemplos de versões diferentes. Documente runtime Node.js, gerenciador de pacotes e requisitos de infraestrutura.
 
@@ -274,7 +276,7 @@ Não reorganize arquivos apenas por estética. Separe domínio, aplicação e in
 ```text
 Turminha SaaS: uma aplicação compartilhada e seus workers
                          |
-                MySQL / InnoDB
+                MariaDB 10.10.7 / InnoDB
             uma base de negócio no ambiente
             um mesmo schema/conjunto de tabelas
                          |
@@ -287,7 +289,7 @@ Turminha SaaS: uma aplicação compartilhada e seus workers
 
 Todos os tenants de produção usam a mesma base/tabelas. O onboarding cria registros, vínculos, configurações, assinatura e namespaces lógicos; **não executa `CREATE DATABASE`, não executa migrations por tenant e não cria tabelas com prefixo por escola**. Mudanças de schema são compartilhadas e executadas por release, com compatibilidade de deploy.
 
-É permitido e obrigatório separar ambientes de desenvolvimento, testes, demonstração, homologação e produção. Uma base de teste independente não é “banco por tenant”: cada ambiente continua com múltiplos tenants na mesma base de negócio. Nunca usar dados de produção para uma demo pública. Redis, storage e ferramentas de observabilidade não substituem MySQL como fonte da verdade.
+É permitido e obrigatório separar ambientes de desenvolvimento, testes, demonstração, homologação e produção. Uma base de teste independente não é “banco por tenant”: cada ambiente continua com múltiplos tenants na mesma base de negócio. Nunca usar dados de produção para uma demo pública. Redis, storage e ferramentas de observabilidade não substituem MariaDB 10.10.7 como fonte da verdade.
 
 Não implementar `databaseUrl` por escola, factory de conexão baseada em slug, tenants com schemas próprios, migrations dinâmicas ou provisionamento de infraestrutura por escola. Um futuro modelo dedicado pode ser discutido em ADR posterior; não construir agora um mecanismo multi-database sem solicitação.
 
@@ -321,7 +323,7 @@ Enrollment:  tenantId NOT NULL, studentId, classroomId
              FK(tenantId, classroomId) -> Classroom(tenantId, id)
 ```
 
-O exemplo é contrato de integridade, não schema completo para colar sem ajuste. Gere o schema Prisma coerente, valide-o e aplique migrations num MySQL real. As FKs compostas impedem vincular aluno A à turma B de outra escola mesmo que o ID isolado seja válido. Constraints não substituem autorização de leitura nem regras de vínculo vigente.
+O exemplo é contrato de integridade, não schema completo para colar sem ajuste. Gere o schema Prisma coerente, valide-o e aplique migrations num MariaDB 10.10.7 real. As FKs compostas impedem vincular aluno A à turma B de outra escola mesmo que o ID isolado seja válido. Constraints não substituem autorização de leitura nem regras de vínculo vigente.
 
 Aplique o mesmo princípio em matrícula, responsáveis, vínculo de equipe/turma, publicações, anexos, observações, participantes, eventos, cobranças do módulo escolar e pedidos. Para referências a usuário global, valide também o vínculo escolar exigido; uma FK válida para `User` não comprova Membership nem acesso à criança.
 
@@ -364,7 +366,7 @@ Use payloads de entrada allowlisted. Não permitir mass assignment de `tenantId`
 
 Raw SQL só em módulo controlado, parametrizado, com `tenantId` explícito e testes. Proibir variantes unsafe e construção de nomes de tabela/banco a partir de usuário/tenant. Operações de plataforma sobre múltiplas escolas exigem entrada separada, capacidade explícita e auditoria; não introduzir um parâmetro público `ignoreTenant`.
 
-O MySQL deste projeto não é PostgreSQL: não alegar proteção por RLS que não foi implementada. A estratégia é aplicação com autorização rigorosa + repositórios escopados + integridade relacional + testes adversariais + controle operacional.
+O MariaDB 10.10.7 deste projeto não é PostgreSQL: não alegar proteção por RLS que não foi implementada. A estratégia é aplicação com autorização rigorosa + repositórios escopados + integridade relacional + testes adversariais + controle operacional.
 
 ### 4.6. Isolamento fora do banco
 
@@ -395,7 +397,7 @@ Provisionamento idempotente cria tenant/escola/admin/configuração e estado de 
 
 Backups do banco compartilhado contêm várias escolas. Nunca entregar dump global a um tenant. Restauração de uma escola deve ser ensaiada em ambiente isolado, com seleção/validação do grafo daquele tenant e plano que não sobrescreva dados dos demais. Restauração global é operação operacional controlada, não um botão administrativo de escola.
 
-Crie duas escolas no mesmo MySQL de teste e prove que o isolamento funciona no mesmo schema — dois bancos separados não comprovam o requisito. Gere recursos de mesmos nomes, IDs válidos de outra escola, usuário com múltiplos vínculos, permissões revogadas, jobs pendentes e cache previamente aquecido.
+Crie duas escolas no mesmo MariaDB 10.10.7 de teste e prove que o isolamento funciona no mesmo schema — dois bancos separados não comprovam o requisito. Gere recursos de mesmos nomes, IDs válidos de outra escola, usuário com múltiplos vínculos, permissões revogadas, jobs pendentes e cache previamente aquecido.
 
 **Gate obrigatório:** testes negativos devem cobrir consultas, inserts/links inválidos, nested writes, aggregates, storage, cache, upload, download, jobs, exports, domínio e concorrência entre abas. Nenhum módulo é considerado pronto sem testar suas fronteiras de tenant e de audiência interna. [R6]
 
@@ -858,7 +860,7 @@ Não resolver falhas desabilitando CSP, checagem de tipos, validações, autenti
 
 ## 23. Plano de testes e critérios de aceite — QA
 
-Use ferramentas compatíveis com o repositório, como Vitest/Jest, testes de integração com MySQL real e Playwright para E2E. Não testar regras dependentes de MySQL apenas em SQLite. Mocks de gateways/IA pertencem aos testes, com testes de contrato complementares.
+Use ferramentas compatíveis com o repositório, como Vitest/Jest, testes de integração com MariaDB 10.10.7 real e Playwright para E2E. Não testar regras dependentes de MariaDB 10.10.7 apenas em SQLite. Mocks de gateways/IA pertencem aos testes, com testes de contrato complementares.
 
 Mantenha matriz rastreável: `requisito → implementação → teste → status → evidência`. Não marque “testado” quando o comando não executou no ambiente.
 
@@ -907,7 +909,7 @@ Mantenha matriz rastreável: `requisito → implementação → teste → status
 | T39 | Todas as ações expostas na UI possuem backend, validação e retorno correto ou estado de indisponibilidade justificado. |
 | T40 | Os dois contratos visuais são preservados nos seus escopos, com mudanças necessárias documentadas e comparação visual. |
 | T41 | Criar duas escolas adiciona linhas na mesma base/schema e não cria databases, schemas, tabelas ou instâncias de aplicação por tenant. |
-| T42 | Com dois tenants no mesmo MySQL, FKs compostas rejeitam matrícula/anexo/vínculo que conecte recursos de escolas diferentes. |
+| T42 | Com dois tenants no mesmo MariaDB 10.10.7, FKs compostas rejeitam matrícula/anexo/vínculo que conecte recursos de escolas diferentes. |
 | T43 | Repositório tenant-scoped recusa contexto ausente; filtros com OR/spread e mass assignment não removem o tenant obrigatório. |
 | T44 | Nested writes, connect/connectOrCreate, upsert, bulk operations, raw SQL e transações não escapam do isolamento. |
 | T45 | Duas abas da mesma conta em escolas diferentes leem/gravam no contexto correto, mesmo após troca de seleção e respostas fora de ordem. |
@@ -925,7 +927,7 @@ Mantenha matriz rastreável: `requisito → implementação → teste → status
 | T57 | Dashboard reproduz sidebar violeta, quatro cards, atualizações, ações rápidas e frequência, sem reutilizar a marca/dados demonstrativos. |
 | T58 | Mudança de contexto atualiza título, filtros, indicadores e links; usuário sem turma tem estado vazio, não dados de uma turma arbitrária. |
 | T59 | Nenhuma senha é exibida/retornada; quickLogin e credenciais admin/123 não funcionam em tenant real. |
-| T60 | Dados de negócio e arquivos persistem após reload/nova sessão porque estão no MySQL/storage; localStorage não é a base da aplicação. |
+| T60 | Dados de negócio e arquivos persistem após reload/nova sessão porque estão no MariaDB 10.10.7/storage; localStorage não é a base da aplicação. |
 | T61 | Mural busca apenas um lote no servidor, mostra Carregar mais lembranças e anexa a próxima página sem duplicação/rolagem perdida. |
 | T62 | Cursor adulterado/de outro tenant/filtro não amplia acesso; nova publicação durante navegação respeita a estratégia de ordenação/snapshot. |
 | T63 | Fila de aprovação usa páginas numeradas, total autorizado e filtros servidor; excluir/aprovar último item ajusta a página válida. |
@@ -951,7 +953,7 @@ Acrescente testes por módulo, concorrência, contratos externos e regressão vi
 
 ## 24. Desenvolvimento local, infraestrutura e release — DEVOPS
 
-Entregue ambiente local reproduzível com Docker Compose para um MySQL de negócio compartilhado por todos os tenants locais, Redis, storage S3 compatível e servidor de e-mail de desenvolvimento. Inclua processamento/varredura de arquivos conforme a solução adotada. Fixe versões e use health checks, volumes e dependências corretas; não use credenciais de desenvolvimento em produção.
+Entregue ambiente local reproduzível com Docker Compose para um MariaDB 10.10.7 de negócio compartilhado por todos os tenants locais, Redis, storage S3 compatível e servidor de e-mail de desenvolvimento. Inclua processamento/varredura de arquivos conforme a solução adotada. Fixe versões e use health checks, volumes e dependências corretas; não use credenciais de desenvolvimento em produção.
 
 A aplicação web pode rodar pelo gerenciador de pacotes ou container. Disponibilize scripts documentados para instalar, subir infraestrutura, migrar, seed, desenvolver, executar worker, testar e buildar. Valide os comandos efetivamente existentes.
 
@@ -959,7 +961,7 @@ A aplicação web pode rodar pelo gerenciador de pacotes ou container. Disponibi
 
 Seed local idempotente: duas escolas fictícias na mesma base e nas mesmas tabelas para testar isolamento; uma demonstração configurável inspirada no contexto Colégio Pilares/Maternal I/Lane/Helen, identificada como demo; alunos e famílias fictícios, múltiplos vínculos, cenários de consentimento, quotas e histórico. Não copiar fotos/dados reais para seeds. Senhas de teste somente em ambiente local/teste, com bloqueio de seed demonstrativo em produção.
 
-Deploy de referência: aplicação e worker em infraestrutura que realmente suporte processos persistentes, MySQL, Redis e storage privado. Documente requisitos e alternativas; não afirmar compatibilidade com determinado plano Hostinger ou hospedagem serverless sem verificar seus limites. Não executar cron por `setInterval` dentro de requisição web.
+Deploy de referência: aplicação e worker em infraestrutura que realmente suporte processos persistentes, MariaDB 10.10.7, Redis e storage privado. Documente requisitos e alternativas; não afirmar compatibilidade com determinado plano Hostinger ou hospedagem serverless sem verificar seus limites. Não executar cron por `setInterval` dentro de requisição web.
 
 Entregue Dockerfile de produção quando apropriado, reverse proxy/TLS documentados, usuário sem privilégios desnecessários, banco/Redis fora da rede pública e limites de recursos. Separar dev, staging e produção.
 
@@ -976,7 +978,7 @@ Não há prazo fechado neste prompt. Faça estimativas somente após diagnóstic
 | Marco | Resultado obrigatório | Gate para avançar |
 |---|---|---|
 | M0 — Diagnóstico | Inventário, leitura integral do HTML, inspeção da imagem, baseline visual/técnica, plano de migração e riscos. | Fontes e estado atual demonstrados; mapa elemento→fluxo→permissão. |
-| M1 — Fundação segura | Banco único/MySQL/Prisma, constraints, identidade, vínculos, políticas, dois layouts e ambiente local. | Dois tenants na mesma base; isolamento/autenticação e fatia turma/dashboard persistida aprovados. |
+| M1 — Fundação segura | Banco único/MariaDB 10.10.7/Prisma, constraints, identidade, vínculos, políticas, dois layouts e ambiente local. | Dois tenants na mesma base; isolamento/autenticação e fatia turma/dashboard persistida aprovados. |
 | M2 — Gestão escolar | Escola/unidades/turmas/ano, alunos, responsáveis, equipe, importação e onboarding. | Primeira turma configurada de ponta a ponta. |
 | M3 — Fluxo central | Chamada, diário, atividades, mídia segura, acervo familiar, submissão/curadoria, paginação e comunicação básica. | Registro chega à família correta; load-more e páginas numeradas funcionam sem coleção ilimitada. |
 | M4 — Pedagogia e rotina | Planejamento/BNCC, projetos, observações, relatórios, cuidados, agenda e autorizações. | Fluxos revisáveis e evidências corretas. |
@@ -1052,7 +1054,7 @@ Separe os status: **implementado**, **testado localmente**, **validado em sandbo
 
 ### Primeira execução solicitada
 
-Comece pela inspeção do repositório, do HTML e da imagem, produza os documentos mínimos do M0 e execute o M1 com uma fatia vertical demonstrável. Nesta primeira fatia, provisione duas escolas de teste no mesmo MySQL/schema, autentique usuário com vínculos, resolva o tenant no servidor e renderize dados persistidos na área da turma e no dashboard com seus layouts próprios. Continue os marcos em ordem enquanto houver contexto e condições de execução, sem iniciar atividades externas persistentes. Se precisar encerrar a sessão, conclua uma unidade coerente, registre checkpoint e deixe a retomada definida.
+Comece pela inspeção do repositório, do HTML e da imagem, produza os documentos mínimos do M0 e execute o M1 com uma fatia vertical demonstrável. Nesta primeira fatia, provisione duas escolas de teste no mesmo MariaDB 10.10.7/schema, autentique usuário com vínculos, resolva o tenant no servidor e renderize dados persistidos na área da turma e no dashboard com seus layouts próprios. Continue os marcos em ordem enquanto houver contexto e condições de execução, sem iniciar atividades externas persistentes. Se precisar encerrar a sessão, conclua uma unidade coerente, registre checkpoint e deixe a retomada definida.
 
 O objetivo não é apresentar sugestões ao final. É transformar esta especificação em software utilizável, testado e operável, preservando a identidade do Turminha.
 
@@ -1066,42 +1068,42 @@ Pontos de rastreabilidade do HTML original: paleta/fontes nas linhas 23–40; na
 
 As referências técnicas abaixo orientam pontos de validação, não substituem assessoria jurídica ou análise pedagógica. Consulte a documentação vigente durante a implementação e registre versões/data de consulta. Requisitos não atribuídos a uma referência são decisões de produto/engenharia desta especificação.
 
-**R1 — LGPD, Lei nº 13.709/2018.** Fundamentos, direitos, segurança e tratamento de dados infantis.  
+**R1 — LGPD, Lei nº 13.709/2018.** Fundamentos, direitos, segurança e tratamento de dados infantis.
 `https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm`
 
-**R2 — ANPD, Enunciado CD/ANPD nº 1, de 22 de maio de 2023.** Hipóteses legais e prevalência do melhor interesse no tratamento de dados de crianças e adolescentes.  
+**R2 — ANPD, Enunciado CD/ANPD nº 1, de 22 de maio de 2023.** Hipóteses legais e prevalência do melhor interesse no tratamento de dados de crianças e adolescentes.
 `https://bibliotecadigital.mj.gov.br/handle/1/10215`
 
-**R3 — ECA Digital e regulamentação.** Avaliar aplicabilidade ao produto e obrigações vigentes.  
-`https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15211.htm`  
+**R3 — ECA Digital e regulamentação.** Avaliar aplicabilidade ao produto e obrigações vigentes.
+`https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15211.htm`
 `https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12880.htm`
 
-**R4 — Ministério da Educação, BNCC.** Referência de campos, direitos, grupos etários, objetivos e documentação das trajetórias de aprendizagem.  
+**R4 — Ministério da Educação, BNCC.** Referência de campos, direitos, grupos etários, objetivos e documentação das trajetórias de aprendizagem.
 `https://basenacionalcomum.mec.gov.br/images/BNCC_EI_EF_110518_versaofinal_site.pdf`
 
-**R5 — Next.js, segurança de dados e autenticação.** Fronteiras de autorização, APIs/Server Actions e entrega mínima de dados.  
-`https://nextjs.org/docs/app/guides/data-security`  
+**R5 — Next.js, segurança de dados e autenticação.** Fronteiras de autorização, APIs/Server Actions e entrega mínima de dados.
+`https://nextjs.org/docs/app/guides/data-security`
 `https://nextjs.org/docs/app/guides/authentication`
 
-**R6 — OWASP, Multi-Tenant Security Cheat Sheet.** Isolamento de tenants em aplicação, dados, cache e operações.  
+**R6 — OWASP, Multi-Tenant Security Cheat Sheet.** Isolamento de tenants em aplicação, dados, cache e operações.
 `https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html`
 
-**R7 — OWASP, File Upload Cheat Sheet.** Validação, autorização, armazenamento e processamento seguro de arquivos.  
+**R7 — OWASP, File Upload Cheat Sheet.** Validação, autorização, armazenamento e processamento seguro de arquivos.
 `https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html`
 
-**R8 — Asaas, documentação oficial de assinaturas e webhooks.** Contratos reais de cobrança e validação de notificações.  
-`https://docs.asaas.com/docs/assinaturas`  
-`https://docs.asaas.com/docs/sobre-os-webhooks`  
+**R8 — Asaas, documentação oficial de assinaturas e webhooks.** Contratos reais de cobrança e validação de notificações.
+`https://docs.asaas.com/docs/assinaturas`
+`https://docs.asaas.com/docs/sobre-os-webhooks`
 `https://docs.asaas.com/reference/criar-novo-webhook`
 
-**R9 — OpenAI, Codex: instruções do repositório e execução por planos.** Usar orientações concisas e um plano verificável/retomável.  
-`https://developers.openai.com/codex/agent-configuration/agents-md`  
-`https://developers.openai.com/codex/learn/best-practices`  
+**R9 — OpenAI, Codex: instruções do repositório e execução por planos.** Usar orientações concisas e um plano verificável/retomável.
+`https://developers.openai.com/codex/agent-configuration/agents-md`
+`https://developers.openai.com/codex/learn/best-practices`
 `https://developers.openai.com/cookbook/articles/codex_exec_plans`
 
-**R10 — Prisma, modelagem relacional, constraints compostas e relation mode.** Relações/FKs reais no MySQL, operações com chaves compostas e compatibilidade com a versão adotada. Não atualizar major version só porque um link aponta para a documentação mais nova.  
-`https://www.prisma.io/docs/orm/data-modeling`  
-`https://www.prisma.io/docs/orm/prisma-client/special-fields-and-types/working-with-composite-ids-and-constraints`  
+**R10 — Prisma, modelagem relacional, constraints compostas e relation mode.** Relações/FKs reais no MariaDB 10.10.7, operações com chaves compostas e compatibilidade com a versão adotada. Não atualizar major version só porque um link aponta para a documentação mais nova.
+`https://www.prisma.io/docs/orm/data-modeling`
+`https://www.prisma.io/docs/orm/prisma-client/special-fields-and-types/working-with-composite-ids-and-constraints`
 `https://www.prisma.io/docs/orm/prisma-schema/data-model/relations/relation-mode`
 
 **Uso das fontes:** especificações de UI, arquitetura escolhida, fluxos comerciais, paginação, marcos e critérios de aceite são decisões deste briefing. Não apresentá-las como funcionalidades já existentes no HTML. Referências externas dão suporte técnico/normativo e devem ser conferidas na versão efetivamente utilizada. Rascunhos jurídicos e curriculares exigem revisão humana apropriada.

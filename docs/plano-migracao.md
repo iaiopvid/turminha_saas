@@ -6,7 +6,7 @@ Não existe aplicação nem conteúdo local de negócio no workspace. O HTML e a
 
 ## Proteção da base configurada
 
-O `.env` aponta para uma base MySQL local chamada `turminha_saas`, ainda sem inventário confirmado. Antes de alterar schema, executar `npm run db:inspect` em modo somente leitura para versão, tabelas, engines, contagens aproximadas e migrações já existentes. Se houver objetos/dados de origem não reconhecida, interromper somente a operação de schema e registrar backup/dry-run/mapeamento após confirmação; manter o restante do desenvolvimento numa base nova de desenvolvimento explicitamente configurada.
+O `.env` aponta para uma base MariaDB 10.10.7 local chamada `turminha_saas`, ainda sem inventário confirmado. Antes de alterar schema, executar `npm run db:inspect` em modo somente leitura para versão, tabelas, engines, contagens aproximadas e migrações já existentes. Se houver objetos/dados de origem não reconhecida, interromper somente a operação de schema e registrar backup/dry-run/mapeamento após confirmação; manter o restante do desenvolvimento numa base nova de desenvolvimento explicitamente configurada.
 
 ## Caminho incremental
 

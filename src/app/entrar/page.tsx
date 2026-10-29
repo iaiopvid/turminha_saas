@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionPrincipal } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 
-type Props = { searchParams: Promise<{ tenant?: string; error?: string; next?: string }> };
+type Props = { searchParams: Promise<{ tenant?: string; error?: string; limit?: string; next?: string }> };
 
 export default async function LoginPage({ searchParams }: Props) {
   const query = await searchParams;
@@ -18,6 +18,7 @@ export default async function LoginPage({ searchParams }: Props) {
         <h1 className="mt-2 font-display text-3xl font-bold">Que bom ter você aqui!</h1>
         <p className="mt-2 text-sm text-slate-600">Entre com sua conta adulta{tenant?.school ? ` para ${tenant.school.name}` : ""}. Seus vínculos definem o que você pode ver.</p>
         {query.error && <p role="alert" className="mt-5 rounded-2xl bg-rose-50 p-3 text-sm text-rose-800">Não foi possível entrar com esses dados. Confira o acesso à escola e tente novamente.</p>}
+        {query.limit && <p role="alert" className="mt-5 rounded-2xl bg-amber-50 p-3 text-sm text-amber-950">Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.</p>}
         {!tenant && <p className="mt-5 rounded-2xl bg-amber-50 p-3 text-sm text-amber-900">Escolha uma escola válida antes de entrar.</p>}
         <form action="/api/auth/signin" method="post" className="mt-6 space-y-4">
           <input type="hidden" name="tenant" value={tenantSlug}/>

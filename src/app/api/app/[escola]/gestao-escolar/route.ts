@@ -11,6 +11,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("student:create"), displayName: z.string().trim().min(2).max(100), classroomId: z.string().min(1).max(30) }),
   z.object({ action: z.literal("staff:assign"), classroomId: z.string().min(1).max(30), membershipId: z.string().min(1).max(30) }),
   z.object({ action: z.literal("guardian:link"), studentId: z.string().min(1).max(30), membershipId: z.string().min(1).max(30) }),
+  z.object({ action: z.literal("guardian:revoke"), studentId: z.string().min(1).max(30), membershipId: z.string().min(1).max(30) }),
 ]);
 
 function back(request: NextRequest, escola: string, result: "saved" | "invalid" | "failed") {
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       ]);
       if (!classroom || !member) return new NextResponse("Turma ou vínculo de equipe fora do escopo desta escola.", { status: 403 });
       await prisma.classroomStaff.upsert({ where: { tenantId_classroomId_membershipId: { tenantId: context.tenantId, classroomId: classroom.id, membershipId: member.id } }, create: { tenantId: context.tenantId, classroomId: classroom.id, membershipId: member.id }, update: {} });
-    } else {
+    } else if (data.action === "guardian:link") {
       const [student, guardian] = await Promise.all([
         prisma.student.findFirst({ where: { id: data.studentId, tenantId: context.tenantId }, select: { id: true } }),
         prisma.membership.findFirst({ where: { id: data.membershipId, tenantId: context.tenantId, status: "ACTIVE", role: MembershipRole.GUARDIAN }, select: { id: true } }),
@@ -70,6 +71,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const currentLink = await prisma.studentGuardian.findUnique({ where: { tenantId_studentId_membershipId: { tenantId: context.tenantId, studentId: student.id, membershipId: guardian.id } }, select: { revokedAt: true } });
       if (currentLink && !currentLink.revokedAt) return back(request, escola, "saved");
       await prisma.studentGuardian.upsert({ where: { tenantId_studentId_membershipId: { tenantId: context.tenantId, studentId: student.id, membershipId: guardian.id } }, create: { tenantId: context.tenantId, studentId: student.id, membershipId: guardian.id, approved: false }, update: { approved: false, revokedAt: null } });
+    } else {
+      const [student, guardian] = await Promise.all([
+        prisma.student.findFirst({ where: { id: data.studentId, tenantId: context.tenantId }, select: { id: true } }),
+        prisma.membership.findFirst({ where: { id: data.membershipId, tenantId: context.tenantId, status: "ACTIVE", role: MembershipRole.GUARDIAN }, select: { id: true } }),
+      ]);
+      if (!student || !guardian) return new NextResponse("Criança ou vínculo familiar fora do escopo desta escola.", { status: 403 });
+      await prisma.$transaction(async (tx) => {
+        const revokedAt = new Date();
+        await tx.studentGuardian.updateMany({ where: { tenantId: context.tenantId, studentId: student.id, membershipId: guardian.id, revokedAt: null }, data: { revokedAt } });
+        const ownedMedia = await tx.mediaAsset.findMany({ where: { tenantId: context.tenantId, studentId: student.id, uploadedByMembershipId: guardian.id, status: { notIn: ["WITHDRAWN", "REJECTED"] } }, select: { id: true, storageKey: true } });
+        const submissions = await tx.mediaSubmission.findMany({ where: { tenantId: context.tenantId, studentId: student.id, submittedByMembershipId: guardian.id, status: { in: ["SUBMITTED", "UNDER_REVIEW", "APPROVED", "CHANGES_REQUESTED"] } }, select: { id: true, status: true } });
+        await tx.mediaSubmission.updateMany({ where: { tenantId: context.tenantId, id: { in: submissions.map((item) => item.id) } }, data: { status: "WITHDRAWN", reviewedAt: revokedAt } });
+        await tx.mediaReviewEvent.createMany({ data: submissions.map((submission) => ({ tenantId: context.tenantId, submissionId: submission.id, actorMembershipId: context.membershipId, actorDisplayName: context.displayName, actorRole: context.role, fromStatus: submission.status, toStatus: "WITHDRAWN" as const, comment: "A escola revogou o vínculo familiar; acessos e submissões foram invalidados." })) });
+        await tx.mediaConsent.updateMany({ where: { tenantId: context.tenantId, membershipId: guardian.id, mediaAssetId: { in: ownedMedia.map((item) => item.id) }, revokedAt: null }, data: { revokedAt } });
+        await tx.mediaAsset.updateMany({ where: { tenantId: context.tenantId, id: { in: ownedMedia.map((item) => item.id) } }, data: { status: "WITHDRAWN" } });
+        await tx.mediaScanJob.updateMany({ where: { tenantId: context.tenantId, mediaAssetId: { in: ownedMedia.map((item) => item.id) }, status: { in: ["PENDING", "PROCESSING"] } }, data: { status: "FAILED", processedAt: revokedAt, lockedUntil: null, lastError: "Guardian access was revoked before scan completed." } });
+        await tx.storageOutbox.createMany({ data: ownedMedia.flatMap((asset) => asset.storageKey ? [{ tenantId: context.tenantId, idempotencyKey: `media-delete:${asset.id}`, storageKey: asset.storageKey }] : []), skipDuplicates: true });
+      }, { timeout: 15000 });
     }
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2002") return back(request, escola, "failed");

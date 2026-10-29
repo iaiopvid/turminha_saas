@@ -1,6 +1,7 @@
 import { loadEnvFile } from "node:process";
 import { existsSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
+import { hash as bcryptHash } from "bcryptjs";
 import { PrismaClient, EnrollmentStatus } from "../src/generated/prisma/client.js";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
@@ -12,11 +13,21 @@ const dbUrl = new URL(rawUrl); const database = decodeURIComponent(dbUrl.pathnam
 if (dbUrl.protocol !== "mysql:" || !["localhost", "127.0.0.1", "::1"].includes(dbUrl.hostname) || !/(?:_dev|_test)$/.test(database)) throw new Error("Lifecycle smoke requires a loopback *_dev or *_test database.");
 const prisma = new PrismaClient({ adapter: new PrismaMariaDb({ host: dbUrl.hostname, port: Number(dbUrl.port || 3306), user: decodeURIComponent(dbUrl.username), password: decodeURIComponent(dbUrl.password), database, connectionLimit: 3 }) });
 const tenant = await prisma.tenant.findUniqueOrThrow({ where: { slug: "colegio-pilares-demo" }, select: { id: true } });
-const suffix = Date.now().toString(); const classAName = `Lifecycle ${suffix} A`; const classBName = `Lifecycle ${suffix} B`; const email = `lifecycle-${suffix}@turminha.local`; const year = 2032;
-let classAId: string | undefined; let classBId: string | undefined; let studentId: string | undefined; let batchId: string | undefined; let importSourceId: string | undefined; let inviteId: string | undefined; let createdUserId: string | undefined; let schoolYearId: string | undefined;
+const adminUser = await prisma.user.findUniqueOrThrow({ where: { email: "admin.demo@turminha.local" }, select: { id: true } });
+const adminMembership = await prisma.membership.findUniqueOrThrow({ where: { tenantId_userId: { tenantId: tenant.id, userId: adminUser.id } }, select: { id: true } });
+const suffix = Date.now().toString(); const classAName = `Lifecycle ${suffix} A`; const classBName = `Lifecycle ${suffix} B`; const email = `lifecycle-${suffix}@turminha.local`; const attackerEmail = `attacker-${suffix}@turminha.local`; const existingEmail = `existing-${suffix}@turminha.local`; const existingPassword = "ExistingAccountPassword!2032"; const year = 2032;
+let classAId: string | undefined; let classBId: string | undefined; let studentId: string | undefined; let batchId: string | undefined; let importSourceId: string | undefined; let createdUserId: string | undefined; let existingTestUserId: string | undefined; let schoolYearId: string | undefined;
 let rolloverSourceYearId: string | undefined; let rolloverTargetYearId: string | undefined; let rolloverClassId: string | undefined; let rolloverStudentId: string | undefined; let rolloverTargetClassId: string | undefined;
 const previousPoliciesStep = await prisma.onboardingProgress.findUnique({ where: { tenantId_step: { tenantId: tenant.id, step: "policies" } } });
+const invitationIds: string[] = [];
+const rateSecret = process.env.RATE_LIMIT_SECRET ?? "turminha-local-rate-limit-secret-only";
+const rateKey = (scope: string, identity: string) => createHmac("sha256", rateSecret).update(`${scope}\0${identity}`).digest("hex");
+const signinTestEmail = `signin-${suffix}@turminha.local`;
+const persistentRateKeys = [rateKey("signin", "admin.demo@turminha.local"), rateKey("signin", signinTestEmail), rateKey("invite-create", `${tenant.id}:${adminMembership.id}`)];
+const previousRateBuckets = await prisma.rateLimitBucket.findMany({ where: { keyHash: { in: persistentRateKeys } } });
 const api = async (path: string, init: RequestInit = {}) => fetch(`${base}${path}`, { ...init, redirect: "manual", headers: { origin: base, cookie, ...(init.headers ?? {}) } });
+const invitationTokenHashes: string[] = [];
+const testRateKeys: string[] = [];
 const formPost = (path: string, fields: Record<string, string>) => api(path, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(fields) });
 const csv = (sourceId: string) => `record_type,source_id,name,email,student_source_id,school_year,classroom_name,role\nstudent,${sourceId},Criança teste lifecycle,,,${new Date().getFullYear()},${classAName},`;
 let cookie = "";
@@ -59,16 +70,73 @@ try {
   const inviteResponse = await api(`/api/app/colegio-pilares-demo/convites`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ role: "GUARDIAN", email, displayName: "Responsável de teste", studentId, classroomId: null }) });
   const invite = await inviteResponse.json() as { invitationUrl: string };
   if (inviteResponse.status !== 201 || !invite.invitationUrl) throw new Error(`Guardian invite creation failed (${inviteResponse.status}).`);
+  const inviteToken = invite.invitationUrl.split("/").at(-1)!;
+  const inviteTokenHash = createHash("sha256").update(inviteToken).digest("hex"); invitationTokenHashes.push(inviteTokenHash);
   const invitePage = await fetch(`${base}${invite.invitationUrl}`, { redirect: "manual" });
   if (invitePage.status !== 200 || !(await invitePage.text()).includes("Responsável de teste")) throw new Error("Guardian invitation page failed to render its scoped summary.");
-  const accepted = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: invite.invitationUrl.split("/").at(-1)!, displayName: "Responsável de teste", password: "LocalSmokePassword!2032" }) });
-  if (accepted.status !== 303 || !accepted.headers.get("set-cookie")) throw new Error(`Invitation acceptance failed (${accepted.status}).`);
-  const inviteTokenHash = createHash("sha256").update(invite.invitationUrl.split("/").at(-1)!).digest("hex");
-  const savedInvite = await prisma.invitation.findUniqueOrThrow({ where: { tokenHash: inviteTokenHash }, select: { id: true, acceptedAt: true } }); inviteId = savedInvite.id;
-  if (!savedInvite.acceptedAt) throw new Error("Invitation was not consumed after acceptance.");
-  const user = await prisma.user.findUniqueOrThrow({ where: { email }, select: { id: true } }); createdUserId = user.id;
-  const replay = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: invite.invitationUrl.split("/").at(-1)!, displayName: "Responsável de teste", password: "LocalSmokePassword!2032" }) });
-  if (replay.status !== 303 || !replay.headers.get("location")?.includes("/convite/") || replay.headers.get("set-cookie")) throw new Error(`Consumed invitation replay response was unexpected (${replay.status}, ${replay.headers.get("location") ?? "no location"}, cookie=${!!replay.headers.get("set-cookie")}).`);
+  const accepted = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: inviteToken, displayName: "Responsável de teste", password: "LocalSmokePassword!2032", email: attackerEmail }) });
+  if (accepted.status !== 303 || !accepted.headers.get("location")?.includes("email=unavailable") || accepted.headers.get("set-cookie")) throw new Error(`New account was not left pending when SMTP is unconfigured (${accepted.status}, ${accepted.headers.get("location")}).`);
+  const savedInvite = await prisma.invitation.findUniqueOrThrow({ where: { tokenHash: inviteTokenHash }, select: { id: true, acceptedAt: true } });
+  invitationIds.push(savedInvite.id);
+  if (savedInvite.acceptedAt) throw new Error("Invitation was consumed before mailbox verification.");
+  const user = await prisma.user.findUniqueOrThrow({ where: { email }, select: { id: true, email: true, emailVerifiedAt: true, memberships: { where: { tenantId: tenant.id }, select: { id: true } }, emailVerifications: { select: { id: true, expiresAt: true, tokenHash: true } } } }); createdUserId = user.id; if (user.email.toLowerCase() !== email.toLowerCase() || await prisma.user.findUnique({ where: { email: attackerEmail }, select: { id: true } })) throw new Error("Invitation acceptance replaced its email with a browser-supplied address.");
+  if (user.emailVerifiedAt || user.memberships.length || !user.emailVerifications.length) throw new Error("Pending email acceptance created an active membership or lacks a verification challenge.");
+  testRateKeys.push(rateKey("email-verification-send", email.toLowerCase()));
+  const retryDelivery = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: inviteToken, displayName: "ResponsÃ¡vel de teste", password: "LocalSmokePassword!2032" }) });
+  const afterRetry = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { emailVerifiedAt: true, memberships: { where: { tenantId: tenant.id }, select: { id: true } }, emailVerifications: { select: { id: true, expiresAt: true, tokenHash: true } } } });
+  if (retryDelivery.status !== 303 || !retryDelivery.headers.get("location")?.includes("email=unavailable") || retryDelivery.headers.get("set-cookie") || afterRetry.emailVerifiedAt || afterRetry.memberships.length || afterRetry.emailVerifications.length < 2) throw new Error(`SMTP retry failure removed the pending marker or activated the account (status=${retryDelivery.status}, location=${new URL(retryDelivery.headers.get("location") ?? base, base).search}, cookie=${!!retryDelivery.headers.get("set-cookie")}, verified=${!!afterRetry.emailVerifiedAt}, memberships=${afterRetry.memberships.length}, challenges=${afterRetry.emailVerifications.length}).`);
+  const verificationToken = randomBytes(32).toString("base64url"); const verificationTokenHash = createHash("sha256").update(verificationToken).digest("hex"); testRateKeys.push(rateKey("email-verification-complete", verificationTokenHash));
+  const challenge = afterRetry.emailVerifications[0]!;
+  await prisma.emailVerification.update({ where: { id: challenge.id }, data: { tokenHash: verificationTokenHash, expiresAt: new Date(Date.now() - 60_000) } });
+  const expiredVerification = await fetch(`${base}/api/invitations/verify`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: verificationToken }) });
+  if (expiredVerification.headers.get("set-cookie") || (await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { emailVerifiedAt: true } })).emailVerifiedAt !== null) throw new Error("Expired mailbox confirmation activated the new account.");
+  await prisma.emailVerification.update({ where: { id: challenge.id }, data: { expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) } });
+  await prisma.invitation.update({ where: { id: savedInvite.id }, data: { revokedAt: new Date() } });
+  const revokedVerification = await fetch(`${base}/api/invitations/verify`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: verificationToken }) });
+  if (revokedVerification.headers.get("set-cookie") || (await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { emailVerifiedAt: true } })).emailVerifiedAt) throw new Error("Email confirmation bypassed a revoked invitation.");
+  await prisma.invitation.update({ where: { id: savedInvite.id }, data: { revokedAt: null } });
+  const verifyPage = await fetch(`${base}/verificar-email/${verificationToken}`); const verifyHtml = await verifyPage.text();
+  if (verifyPage.status !== 200 || !verifyHtml.includes("Confirme seu e-mail") || !verifyHtml.includes("Confirmar e acessar")) throw new Error("Mailbox confirmation page did not render the active challenge.");
+  const confirmed = await fetch(`${base}/api/invitations/verify`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: verificationToken }) });
+  if (confirmed.status !== 303 || !confirmed.headers.get("set-cookie") || !confirmed.headers.get("location")?.includes("/familia/colegio-pilares-demo")) throw new Error("Mailbox confirmation did not activate the invitation and establish a session.");
+  const confirmedUser = await prisma.user.findUniqueOrThrow({ where: { id: user.id }, select: { emailVerifiedAt: true, memberships: { where: { tenantId: tenant.id }, select: { id: true } } } });
+  if (!confirmedUser.emailVerifiedAt || confirmedUser.memberships.length !== 1 || (await prisma.invitation.findUniqueOrThrow({ where: { id: savedInvite.id }, select: { acceptedAt: true } })).acceptedAt === null) throw new Error("Mailbox verification did not atomically activate the account and consume the invitation.");
+  const verifyReplay = await fetch(`${base}/api/invitations/verify`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: verificationToken }) });
+  if (verifyReplay.headers.get("set-cookie")) throw new Error("Mailbox verification token was reusable.");
+
+  async function createGuardianInvite(inviteEmail: string) {
+    const response = await api(`/api/app/colegio-pilares-demo/convites`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ role: "GUARDIAN", email: inviteEmail, displayName: "Convidado de teste", studentId, classroomId: null }) });
+    const body = await response.json() as { invitationUrl?: string; error?: string };
+    if (response.status !== 201 || !body.invitationUrl) throw new Error(`Additional test invite could not be created (${response.status}): ${body.error ?? "no link"}.`);
+    const token = body.invitationUrl.split("/").at(-1)!; const tokenHash = createHash("sha256").update(token).digest("hex"); invitationTokenHashes.push(tokenHash);
+    const record = await prisma.invitation.findUniqueOrThrow({ where: { tokenHash }, select: { id: true } }); invitationIds.push(record.id);
+    return { token, tokenHash, url: body.invitationUrl, id: record.id };
+  }
+  const revoked = await createGuardianInvite(`revoked-${suffix}@turminha.local`);
+  const revokeResponse = await api(`/api/app/colegio-pilares-demo/convites/${revoked.id}`, { method: "DELETE" });
+  if (revokeResponse.status !== 200 || !(await prisma.invitation.findUniqueOrThrow({ where: { id: revoked.id }, select: { revokedAt: true } })).revokedAt) throw new Error("Invitation revoke did not persist.");
+  const revokedPage = await fetch(`${base}${revoked.url}`); const revokedHtml = await revokedPage.text();
+  const revokedAttempt = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: revoked.token, displayName: "Convidado de teste", password: "RevokedInvitePassword!2032" }) });
+  if (!revokedHtml.includes("foi revogado") || revokedHtml.includes("name=\"password\"") || revokedAttempt.headers.get("set-cookie")) throw new Error("Revoked invite remained usable.");
+
+  const expired = await createGuardianInvite(`expired-${suffix}@turminha.local`);
+  await prisma.invitation.update({ where: { id: expired.id }, data: { expiresAt: new Date(Date.now() - 60_000) } });
+  const expiredPage = await fetch(`${base}${expired.url}`); const expiredHtml = await expiredPage.text();
+  const expiredAttempt = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: expired.token, displayName: "Convidado de teste", password: "ExpiredInvitePassword!2032" }) });
+  if (!expiredHtml.includes("expirou") || expiredHtml.includes("name=\"password\"") || expiredAttempt.headers.get("set-cookie")) throw new Error("Expired invite remained usable.");
+
+  const existingAccount = await prisma.user.create({ data: { email: existingEmail, displayName: "Conta existente", passwordHash: await bcryptHash(existingPassword, 12) }, select: { id: true } }); existingTestUserId = existingAccount.id;
+  const existingInvite = await createGuardianInvite(existingEmail);
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const wrong = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: existingInvite.token, displayName: "Conta existente", password: "WrongExistingPassword!2032" }) });
+    if (wrong.status !== 303 || !wrong.headers.get("location")?.includes("error=1")) throw new Error(`Existing account wrong password was not rejected on attempt ${attempt + 1}.`);
+  }
+  const throttled = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: existingInvite.token, displayName: "Conta existente", password: existingPassword }) });
+  if (!throttled.headers.get("location")?.includes("error=rate-limit") || (await prisma.invitation.findUniqueOrThrow({ where: { id: existingInvite.id }, select: { acceptedAt: true } })).acceptedAt) throw new Error("Repeated password attempts did not trigger the invite rate limit.");
+  await prisma.rateLimitBucket.deleteMany({ where: { keyHash: rateKey("invite-accept", existingInvite.tokenHash) } });
+  const existingAccepted = await fetch(`${base}/api/invitations/accept`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ token: existingInvite.token, displayName: "Conta existente", password: existingPassword }) });
+  if (existingAccepted.status !== 303 || !existingAccepted.headers.get("set-cookie")) throw new Error("Existing account could not accept its invitation with the correct password.");
+  if ((await prisma.user.findMany({ where: { email: existingEmail }, select: { id: true } })).length !== 1) throw new Error("Accepting a user invitation duplicated the existing account.");
 
   const onboarding = await formPost(`/api/app/colegio-pilares-demo/gestao-escolar/onboarding`, { step: "policies", completed: "true" });
   if (onboarding.status !== 303 || !onboarding.headers.get("location")?.includes("saved=1")) throw new Error("Onboarding progress was not saved.");
@@ -102,15 +170,33 @@ try {
     const event = await formPost(`/api/app/colegio-pilares-demo/calendario`, { action: "entry:create", schoolYearId, kind: "HOLIDAY", title: "Smoke feriado", startsOn: `${year}-05-01`, endsOn: `${year}-05-01` });
     if (event.status !== 303 || !event.headers.get("location")?.includes("saved=1")) throw new Error("Calendar entry could not be created within its school year.");
   }
-  console.log(JSON.stringify({ csv: "preview, dry-run, persisted commit and idempotent retry passed", transfers: "history persisted; cross-tenant destination denied", invitations: "created and accepted; replay rejected", onboarding: "resume checkpoint persisted", calendar: schoolYearId ? "year and bounded event persisted" : "existing school year was safely reused", yearRollover: "unsafe close blocked; source history closed; selected class, explicitly selected staff and student enrollment carried into the new year" }));
-} finally {
-  if (createdUserId) {
-    await prisma.session.deleteMany({ where: { userId: createdUserId } });
-    const membership = await prisma.membership.findFirst({ where: { tenantId: tenant.id, userId: createdUserId }, select: { id: true } });
-    if (membership) { await prisma.studentGuardian.deleteMany({ where: { tenantId: tenant.id, membershipId: membership.id } }); await prisma.classroomStaff.deleteMany({ where: { tenantId: tenant.id, membershipId: membership.id } }); await prisma.membership.delete({ where: { id: membership.id } }); }
-    await prisma.user.deleteMany({ where: { id: createdUserId, email } });
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const wrongLogin = await fetch(`${base}/api/auth/signin`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ email: signinTestEmail, password: "WrongAdminPassword!2032", tenant: "colegio-pilares-demo" }) });
+    if (wrongLogin.status !== 303 || !wrongLogin.headers.get("location")?.includes("error=1")) throw new Error(`Login rate limit activated before the configured threshold at attempt ${attempt + 1}.`);
   }
-  if (inviteId) await prisma.invitation.deleteMany({ where: { tenantId: tenant.id, id: inviteId } });
+  const loginThrottled = await fetch(`${base}/api/auth/signin`, { method: "POST", redirect: "manual", headers: { origin: base, "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ email: signinTestEmail, password: password!, tenant: "colegio-pilares-demo" }) });
+  if (!loginThrottled.headers.get("location")?.includes("limit=1") || loginThrottled.headers.get("set-cookie")) throw new Error("Repeated login attempts were not rate-limited.");
+  const limitedInvite = { role: "GUARDIAN", email: `rate-create-${suffix}@turminha.local`, displayName: "Rate limit smoke", studentId, classroomId: null };
+  for (let attempt = 0; attempt < 21; attempt++) {
+    const response = await api(`/api/app/colegio-pilares-demo/convites`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(limitedInvite) });
+    if (attempt === 0 && response.status === 201) {
+      const created = await response.json() as { invitationUrl: string }; const tokenHash = createHash("sha256").update(created.invitationUrl.split("/").at(-1)!).digest("hex"); invitationTokenHashes.push(tokenHash);
+      const record = await prisma.invitation.findUniqueOrThrow({ where: { tokenHash }, select: { id: true } }); invitationIds.push(record.id);
+    } else if (response.status !== 409) throw new Error(`Repeated invite create was unexpected before the limit (${response.status}).`);
+  }
+  const createThrottled = await api(`/api/app/colegio-pilares-demo/convites`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(limitedInvite) });
+  if (createThrottled.status !== 429 || !createThrottled.headers.get("retry-after")) throw new Error("Repeated invite creation did not return 429 with Retry-After.");
+  console.log(JSON.stringify({ csv: "preview, dry-run, persisted commit and idempotent retry passed", transfers: "history persisted; cross-tenant destination denied", invitations: "browser-supplied email substitution rejected; new account stays pending until mailbox token confirms; expired/revoked/replayed confirmation denied; existing account password required; invite/email and auth throttles passed; SMTP absence explicit", onboarding: "resume checkpoint persisted", calendar: schoolYearId ? "year and bounded event persisted" : "existing school year was safely reused", yearRollover: "unsafe close blocked; source history closed; selected class, explicitly selected staff and student enrollment carried into the new year" }));
+} finally {
+  for (const [knownUserId, testEmail] of [[createdUserId, email], [existingTestUserId, existingEmail], [undefined, attackerEmail]] as const) {
+    const testUserId = knownUserId ?? (await prisma.user.findUnique({ where: { email: testEmail }, select: { id: true } }))?.id;
+    if (!testUserId) continue;
+    await prisma.session.deleteMany({ where: { userId: testUserId } });
+    const membership = await prisma.membership.findFirst({ where: { tenantId: tenant.id, userId: testUserId }, select: { id: true } });
+    if (membership) { await prisma.studentGuardian.deleteMany({ where: { tenantId: tenant.id, membershipId: membership.id } }); await prisma.classroomStaff.deleteMany({ where: { tenantId: tenant.id, membershipId: membership.id } }); await prisma.membership.delete({ where: { id: membership.id } }); }
+    await prisma.user.deleteMany({ where: { id: testUserId, email: testEmail } });
+  }
+  await prisma.invitation.deleteMany({ where: { tenantId: tenant.id, OR: [{ id: { in: invitationIds } }, { tokenHash: { in: invitationTokenHashes } }] } });
   if (studentId) {
     const studentEnrollments = await prisma.enrollment.findMany({ where: { tenantId: tenant.id, studentId }, select: { id: true } }); const enrollmentIds = studentEnrollments.map((item) => item.id);
     await prisma.enrollmentTransfer.deleteMany({ where: { tenantId: tenant.id, OR: [{ fromEnrollmentId: { in: enrollmentIds } }, { toEnrollmentId: { in: enrollmentIds } }] } });
@@ -134,7 +220,9 @@ try {
   if (classBId) await prisma.classroom.deleteMany({ where: { tenantId: tenant.id, id: classBId } });
   if (schoolYearId) { await prisma.calendarEntry.deleteMany({ where: { tenantId: tenant.id, schoolYearId } }); await prisma.schoolYear.deleteMany({ where: { tenantId: tenant.id, id: schoolYearId } }); }
   if (importSourceId) await prisma.importedStudentSource.deleteMany({ where: { tenantId: tenant.id, id: importSourceId } });
-  if (inviteId) await prisma.invitation.deleteMany({ where: { tenantId: tenant.id, id: inviteId } });
+  const smokeRateKeys = [...persistentRateKeys, ...invitationTokenHashes.map((tokenHash) => rateKey("invite-accept", tokenHash)), ...testRateKeys];
+  await prisma.rateLimitBucket.deleteMany({ where: { keyHash: { in: smokeRateKeys } } });
+  for (const bucket of previousRateBuckets) await prisma.rateLimitBucket.create({ data: bucket });
   if (previousPoliciesStep) await prisma.onboardingProgress.update({ where: { tenantId_step: { tenantId: tenant.id, step: "policies" } }, data: { updatedByMembershipId: previousPoliciesStep.updatedByMembershipId, completedAt: previousPoliciesStep.completedAt, updatedAt: previousPoliciesStep.updatedAt } });
   else await prisma.onboardingProgress.deleteMany({ where: { tenantId: tenant.id, step: "policies" } });
   await prisma.$disconnect();

@@ -21,7 +21,7 @@ export function InviteCreator({ school, students, classrooms }: { school: string
       const result = await response.json() as { invitationUrl?: string; error?: string };
       if (!response.ok || !result.invitationUrl) throw new Error(result.error ?? "Não foi possível criar o convite.");
       setInviteUrl(new URL(result.invitationUrl, window.location.origin).toString());
-      setMessage("Link criado. Copie e compartilhe diretamente com a pessoa convidada; ele expira em sete dias e não foi enviado por e-mail.");
+      setMessage("Link criado. Copie e compartilhe diretamente com a pessoa convidada; ele expira em sete dias. Contas novas precisam confirmar o e-mail. O envio depende da configuração de e-mail da plataforma.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível criar o convite.");
     } finally { setBusy(false); }

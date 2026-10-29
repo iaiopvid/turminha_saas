@@ -8,7 +8,7 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
 
 const url = new URL(connectionString);
-if (url.protocol !== "mysql:") throw new Error("Expected a MySQL URL");
+if (url.protocol !== "mysql:") throw new Error("MariaDB DATABASE_URL must use the mysql:// protocol expected by the Prisma adapter.");
 const database = decodeURIComponent(url.pathname.replace(/^\//, ""));
 
 const connection = await mariadb.createConnection({

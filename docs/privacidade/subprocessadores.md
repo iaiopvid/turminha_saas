@@ -4,7 +4,7 @@ Não há subprocessador de produção conectado neste checkpoint.
 
 | Serviço previsto | Dados que poderá tratar | Estado / validação necessária |
 |---|---|---|
-| MySQL próprio por ambiente | Registros da escola | MariaDB local testado; infraestrutura/backup MySQL produção não definida |
+| MariaDB 10.10.7 compartilhado por ambiente | Registros da escola | MariaDB local testado; infraestrutura e backup de produção ainda não definidos |
 | S3 compatível privado | Arquivos/imagens | Não conectado; escolher fornecedor e avaliar localização/contrato |
 | SMTP | Convites/notificações | Mailpit apenas no compose, não validado |
 | Redis/worker | Jobs tenant-scoped | Compose preparado; não integrado |

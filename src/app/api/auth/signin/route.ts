@@ -3,6 +3,7 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 import { createSession, SESSION_COOKIE } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
+import { consumeRateLimit } from "@/server/security/rate-limit";
 
 const credentials = z.object({
   email: z.string().email().max(254),
@@ -15,9 +16,12 @@ export async function POST(request: NextRequest) {
   const form = await request.formData();
   const parsed = credentials.safeParse({ email: form.get("email"), password: form.get("password"), tenant: form.get("tenant") });
   if (!parsed.success) return NextResponse.redirect(new URL(`/entrar?tenant=${encodeURIComponent(String(form.get("tenant") ?? ""))}&error=1`, request.url), 303);
+  const normalizedEmail = parsed.data.email.toLowerCase();
+  const limit = await consumeRateLimit("signin", normalizedEmail, { limit: 12, windowMs: 15 * 60 * 1000 });
+  if (!limit.allowed) return NextResponse.redirect(new URL(`/entrar?tenant=${encodeURIComponent(parsed.data.tenant)}&limit=1`, request.url), 303);
 
   const tenant = await prisma.tenant.findFirst({ where: { slug: parsed.data.tenant, status: "ACTIVE" }, select: { id: true } });
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() }, select: { id: true, passwordHash: true } });
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true, passwordHash: true } });
   const passwordIsValid = user ? await compare(parsed.data.password, user.passwordHash) : false;
   const membership = tenant && user ? await prisma.membership.findFirst({
     where: { tenantId: tenant.id, userId: user.id, status: "ACTIVE" },

@@ -7,7 +7,7 @@
 - Diretório do projeto não contém `.git`, `package.json`, lockfile, código de aplicação, rotas, autenticação, schema/migrations Prisma, testes ou configuração de deploy. Não havia `AGENTS.md` aplicável no diretório nem nos ancestrais examinados.
 - O `LEIA-ME.md` e o inventário do ZIP confirmam que o kit contém apenas a especificação e as duas referências. DeliveryFood/VitaMulher não foram consultados; seus repositórios não estão neste workspace.
 - Existe `.env` local com `DATABASE_URL` para `mysql://…@localhost:3306/turminha_saas`. Segredo não foi exibido. TCP local responde. A existência/conteúdo das tabelas ainda precisa ser inventariada em modo somente leitura antes de qualquer migration/seed.
-- Runtime detectado: Node.js 22.18.0, npm 10.9.3. Docker e clientes CLI MySQL não estão disponíveis no PATH. O servidor MySQL local está acessível pela porta configurada.
+- Runtime detectado: Node.js 22.18.0, npm 10.9.3. Docker e clientes CLI MariaDB 10.10.7 não estão disponíveis no PATH. O servidor MariaDB 10.10.7 local está acessível pela porta configurada.
 - Não há dados ou funcionalidades da aplicação no workspace a migrar. Isso não autoriza apagar ou recriar a base configurada em `.env`.
 
 ## Referências examinadas
@@ -22,19 +22,19 @@ Não havia scripts de projeto para executar. Nenhum teste/build/lint anterior ex
 
 ## Atualização após M1
 
-A inspeção somente leitura foi concluída: a base apontada pelo `.env` original tinha MariaDB 10.10.7, InnoDB e nenhuma tabela. Esse `.env` não foi modificado. A migração e o seed foram executados somente em `turminha_saas_dev`, uma base separada de desenvolvimento compartilhado. Como o servidor detectado é MariaDB e Docker/cliente MySQL não estão disponíveis, o gate de MySQL 8 permanece pendente. No primeiro `next dev`, Next.js gerou `AGENTS.md`; as instruções foram lidas e o arquivo mantido intacto.
+A inspeção somente leitura foi concluída: a base apontada pelo `.env` original tinha MariaDB 10.10.7, InnoDB e nenhuma tabela. Esse `.env` não foi modificado. A migração e o seed foram executados somente em `turminha_saas_dev`, uma base separada de desenvolvimento compartilhado. O servidor detectado é MariaDB 10.10.7; por decisão de 28/10/2026, essa é a versão-alvo e não existe gate de outro produto de banco. Docker não estava disponível na inspeção inicial. No primeiro `next dev`, Next.js gerou `AGENTS.md`; as instruções foram lidas e o arquivo mantido intacto.
 
 ## Riscos e decisões
 
 ## Atualização M2 — 26/10/2026
 
-M2 adicionou gestão de escola/unidade/turmas, capacidade e matrícula na base de desenvolvimento compartilhada. O smoke validou escopo e lista de espera. Importação CSV, convites, calendário e transferência seguem pendentes. A conexão configurada foi confirmada como MariaDB 10.10.7; MySQL 8 ainda não foi validado.
+M2 adicionou gestão de escola/unidade/turmas, capacidade e matrícula na base de desenvolvimento compartilhada. O smoke validou escopo e lista de espera. Importação CSV, convites, calendário e transferência seguem pendentes. A conexão configurada foi confirmada como MariaDB 10.10.7; esta versão está definida como alvo.
 
 1. O `.env` existente pode apontar para uma base com dados de outro projeto; inventariar somente leitura e não redefinir a conexão.
 2. Credenciais Lane/Helen reais não foram fornecidas. O seed usará pessoas explicitamente fictícias, sem endereços de e-mail ou fotos verdadeiras.
 3. O desenho do HTML não comprova consentimento para expor nomes ou rostos. Projeção pública de crianças começa desligada.
-4. Instalação da stack depende do npm; infraestrutura local não tem Docker e precisa de documentação/alternativa MySQL existente.
+4. Instalação da stack depende do npm; infraestrutura local não tem Docker e usa a conexão MariaDB 10.10.7 existente.
 
 ## Atualizacao depois de M2 — 26/10/2026
 
-M2 adicionou gestao de escola/unidade/turmas, capacidade e matricula na base de desenvolvimento compartilhada. O smoke validou escopo e lista de espera. Importacao CSV, convites, calendario e transferencia seguem pendentes. A conexao configurada respondeu MariaDB 10.10.7; MySQL 8 ainda nao foi validado.
+M2 adicionou gestao de escola/unidade/turmas, capacidade e matricula na base de desenvolvimento compartilhada. O smoke validou escopo e lista de espera. Importacao CSV, convites, calendario e transferencia seguem pendentes. A conexao configurada respondeu MariaDB 10.10.7; esta versao esta definida como alvo.

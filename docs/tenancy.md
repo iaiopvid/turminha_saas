@@ -1,6 +1,6 @@
 # Ownership e tenancy
 
-Topologia: um MySQL/schema compartilhado por ambiente. Todos os modelos abaixo são tenant-owned e carregam `tenantId`; `User` e `Session` são identidade global e não autorizam acesso a dado escolar sem vínculo ativo.
+Topologia: um MariaDB 10.10.7/schema compartilhado por ambiente. Todos os modelos abaixo são tenant-owned e carregam `tenantId`; `User` e `Session` são identidade global e não autorizam acesso a dado escolar sem vínculo ativo.
 
 | Modelo / tabela | Owner / fronteira | Proteção implementada em M1 | Estado |
 |---|---|---|---|
@@ -23,3 +23,12 @@ Não existem ainda outbox, jobs, notificações, exportações, armazenamento de
 ## Contexto
 
 `resolveTenantContext` deriva o user da sessão persistida, valida tenant ativo e membership ativa e retorna o papel; os repositórios recebem esse contexto. Papel docente também restringe turmas atribuídas. Autorização granular por ação/recurso e validação para todos os futuros endpoints continuam pendentes.
+
+
+## Dominios personalizados (T75)
+
+`TenantDomain` vive no schema de negocio compartilhado e tem hostname unico global e `tenantId`. Administracao escolar cria o registro pendente e publica o TXT `turminha-domain-verification=<token>` no nome exato; somente a correspondencia TXT transforma o registro em VERIFIED. Remocao tambem exige resolver o mesmo TXT. Nao ha acao para tomar ou reassociar dominio ocupado; a escola proprietaria precisa remover com nova prova antes de outra poder cadastrar.
+
+A aplicacao le o header HTTP `Host` normalizado (nao usa `X-Forwarded-Host` para decidir tenant). O host base configurado e loopback ficam disponiveis para acesso por slug. Host customizado desconhecido ou pendente retorna 404; host verificado seleciona somente seu tenant na raiz e bloqueia slug/API de outra escola. Contexto autenticado continua exigindo membership ativa.
+
+A prova DNS e o roteamento da aplicacao foram exercitados localmente; DNS publico, configuracao de proxy/DNS do provedor e TLS/certificado ainda dependem de infraestrutura externa e nao foram homologados.

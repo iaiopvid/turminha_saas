@@ -6,7 +6,7 @@ loadEnvFile(existsSync(".env.local") ? ".env.local" : ".env");
 const target = "turminha_saas_dev";
 const url = new URL(process.env.DATABASE_URL ?? "");
 if (url.protocol !== "mysql:" || !["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
-  throw new Error("Local database setup accepts only a loopback MySQL/MariaDB host.");
+  throw new Error("Local database setup accepts only a loopback MariaDB host; DATABASE_URL uses the Prisma mysql:// protocol.");
 }
 const connection = await mariadb.createConnection({
   host: url.hostname,

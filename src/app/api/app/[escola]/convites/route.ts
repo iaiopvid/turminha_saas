@@ -4,6 +4,7 @@ import { MembershipRole } from "@/generated/prisma/client";
 import { z } from "zod";
 import { ContextError, resolveTenantContext } from "@/server/tenancy/context";
 import { prisma } from "@/server/db/prisma";
+import { consumeRateLimit } from "@/server/security/rate-limit";
 
 const inviteSchema = z.object({
   role: z.enum([MembershipRole.GUARDIAN, MembershipRole.TEACHER, MembershipRole.ASSISTANT]),
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const parsed = inviteSchema.safeParse(input);
   if (!parsed.success) return NextResponse.json({ error: "Informe o perfil, e-mail, nome e vínculo correspondente." }, { status: 400 });
   const data = parsed.data;
+  const limit = await consumeRateLimit("invite-create", `${context.tenantId}:${context.membershipId}`, { limit: 25, windowMs: 60 * 60 * 1000 });
+  if (!limit.allowed) return NextResponse.json({ error: "Limite de convites atingido. Aguarde antes de tentar novamente." }, { status: 429, headers: { "retry-after": String(limit.retryAfterSeconds), "cache-control": "no-store" } });
 
   const [student, classroom, existingUser] = await Promise.all([
     data.studentId ? prisma.student.findFirst({ where: { id: data.studentId, tenantId: context.tenantId }, select: { id: true } }) : null,

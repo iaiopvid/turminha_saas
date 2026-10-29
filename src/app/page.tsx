@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { ArrowRight, Heart, Sparkles } from "lucide-react";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { isPlatformHostname, normalizeRequestHostname, resolveVerifiedDomain } from "@/server/tenancy/domains";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const hostname = normalizeRequestHostname((await headers()).get("host"));
+  if (!hostname) notFound();
+  if (!isPlatformHostname(hostname)) {
+    const tenant = await resolveVerifiedDomain(hostname);
+    if (!tenant) notFound();
+    redirect(`/s/${encodeURIComponent(tenant.slug)}`);
+  }
   return (
     <main className="min-h-screen bg-[#e0f7fa] px-5 py-16 text-slate-800">
       <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border-4 border-white bg-white/90 p-8 shadow-xl md:p-14">
